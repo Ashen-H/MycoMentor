@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "MycoMentor",
-    "slug": "MycoMentor",
+    "name": "mychoMentor",
+    "slug": "mychoMentor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -36,6 +36,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "assetBundlePatterns": ["**/*"] 
   }
 }
