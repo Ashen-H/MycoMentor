@@ -11,28 +11,27 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Linking, // Add this import
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Location from "expo-location";
 
 export default function HomeScreen() {
-  // Environmental data state
-  // Environmental data state
+
   const [envData, setEnvData] = useState({
     temperature: "00",
     humidity: "00",
     intensity: "00",
     pH: "00",
     loading: true,
-    error: null as string | null, // Update this type definition
+    error: null as string | null, 
   });
-  // Fetch environmental data from backend
+
   useEffect(() => {
     const fetchEnvironmentalData = async () => {
       try {
-        // 1. Request location permissions
+     
         let { status } = await Location.requestForegroundPermissionsAsync();
 
         if (status !== "granted") {
@@ -48,7 +47,7 @@ export default function HomeScreen() {
           return;
         }
 
-        // 2. ADD THIS: Check if location services are enabled
+
         let locationEnabled = await Location.hasServicesEnabledAsync();
 
         if (!locationEnabled) {
@@ -77,23 +76,21 @@ export default function HomeScreen() {
           return;
         }
 
-        // 3. Get current location with better error handling
         setEnvData((prev) => ({ ...prev, loading: true }));
         let location;
         try {
           location = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
-            timeInterval: 5000, // Get location that's at most 5 seconds old
+            timeInterval: 5000, 
           });
         } catch (locationError) {
           console.error("Error getting location:", locationError);
 
-          // 4. ADD THIS: Use default coordinates as fallback
           console.log("Using fallback location coordinates");
-          const defaultLatitude = 40.7128; // New York coordinates as example
-          const defaultLongitude = -74.006;
+          const defaultLatitude = 6.6085; 
+          const defaultLongitude = 80.1429;
 
-          // Continue with API call using default coordinates
+  
           try {
             const API_URL =
               "http://your-backend-url.com/api/environmental-data";
@@ -128,14 +125,12 @@ export default function HomeScreen() {
           return;
         }
 
-        // Use actual coordinates if available
+ 
         const { latitude, longitude } = location.coords;
 
-        // 5. Continue with your existing API call
-        // Replace with your actual backend URL
+
         const API_URL = "http://your-backend-url.com/api/environmental-data";
 
-        // Call your backend API
         const response = await fetch(
           `${API_URL}?latitude=${latitude}&longitude=${longitude}`
         );
@@ -169,7 +164,7 @@ export default function HomeScreen() {
 
     fetchEnvironmentalData();
 
-    // Refresh data every 15 minutes
+
     const intervalId = setInterval(fetchEnvironmentalData, 15 * 60 * 1000);
 
     return () => clearInterval(intervalId);
@@ -208,8 +203,6 @@ export default function HomeScreen() {
       {/* Main Features Grid */}
       <ScrollView style={styles.contentContainer}>
         <View style={styles.featuresGrid}>
-          // Update these TouchableOpacity components in your HomeScreen.tsx
-          file:
           {/* Row 1 */}
           <View style={styles.featuresRow}>
             <TouchableOpacity
@@ -327,7 +320,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      // Update this in your HomeScreen.tsx file:
       {/* Bottom Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => {}}>

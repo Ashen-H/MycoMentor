@@ -13,7 +13,7 @@ import { router } from "expo-router";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-// Define lesson categories and content
+
 const LESSONS = [
   {
     id: 1,

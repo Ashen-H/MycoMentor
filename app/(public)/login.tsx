@@ -12,19 +12,85 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { router, Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  const validateInputs = () => {
+    if (!email.trim()) {
+      Alert.alert("Error", "Please enter your email or username");
+      return false;
+    }
+    
+    if (!password) {
+      Alert.alert("Error", "Please enter your password");
+      return false;
+    }
+    
+    return true;
+  };
 
-  const handleLogin = () => {
-    // Navigate to the home screen
-    router.push("/home");
+  const handleLogin = async () => {
+    if (!validateInputs()) {
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Replace with your actual backend API URL
+      const apiUrl = 'http://192.168.1.200:5001/api/auth/login';
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email, // Your backend should handle both email and username login
+          password,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+      
+      // Store the token securely
+      await SecureStore.setItemAsync('userToken', data.token);
+      
+      // Login successful - navigate to home screen
+      router.push("/home");
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      
+      // Handle error
+      let errorMessage = "Something went wrong. Please try again later.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('Invalid credentials')) {
+        Alert.alert("Login Failed", "Invalid email or password. Please try again.");
+      } else {
+        Alert.alert("Login Failed", errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,15 +104,14 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
-
              {/* Background Mushroom Image */}
-                        <Image
-                          source={require("../../assets//images/mushroom-bg.png")}
-                          style={styles.mushroomBackground}
-                          resizeMode="contain"
-                        />
+             <Image
+               source={require("../../assets/images/mushroom-bg.png")}
+               style={styles.mushroomBackground}
+               resizeMode="contain"
+             />
+             
             {/* Header */}
-
             <View style={styles.header}>
               <Pressable onPress={() => router.back()} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="black" />
@@ -84,6 +149,8 @@ export default function LoginScreen() {
                       value={email}
                       onChangeText={setEmail}
                       placeholderTextColor="#666"
+                      editable={!isLoading}
+                      autoCapitalize="none"
                     />
                   </View>
 
@@ -95,10 +162,12 @@ export default function LoginScreen() {
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
                       placeholderTextColor="#666"
+                      editable={!isLoading}
                     />
                     <TouchableOpacity
                       style={styles.eyeIcon}
                       onPress={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
                     >
                       <Ionicons
                         name={showPassword ? "eye-off" : "eye"}
@@ -108,12 +177,23 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity onPress={() => router.push("/reset")}>
+                  <TouchableOpacity 
+                    onPress={() => router.push("/reset")}
+                    disabled={isLoading}
+                  >
                     <Text style={styles.forgotPassword}>Forgot Password?</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                    <Text style={styles.loginButtonText}>Login</Text>
+                  <TouchableOpacity 
+                    style={[styles.loginButton, isLoading && styles.disabledButton]} 
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#6da77f" />
+                    ) : (
+                      <Text style={styles.loginButtonText}>Login</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -129,6 +209,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    position: "relative",
   },
   header: {
     flexDirection: "row",
@@ -182,7 +263,6 @@ const styles = StyleSheet.create({
     paddingBottom: 300,
   },
   formFields: {
-   
     marginTop: 100,
     padding: 24,
     gap: 16,
@@ -220,10 +300,15 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     marginTop: 16,
+    height: 56,
+    justifyContent: "center",
   },
   loginButtonText: {
     color: "#000",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
 });
