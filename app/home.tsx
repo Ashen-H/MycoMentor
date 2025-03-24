@@ -18,20 +18,18 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 
 export default function HomeScreen() {
-
   const [envData, setEnvData] = useState({
     temperature: "00",
     humidity: "00",
     intensity: "00",
     pH: "00",
     loading: true,
-    error: null as string | null, 
+    error: null as string | null,
   });
 
   useEffect(() => {
     const fetchEnvironmentalData = async () => {
       try {
-     
         let { status } = await Location.requestForegroundPermissionsAsync();
 
         if (status !== "granted") {
@@ -46,7 +44,6 @@ export default function HomeScreen() {
           );
           return;
         }
-
 
         let locationEnabled = await Location.hasServicesEnabledAsync();
 
@@ -81,16 +78,15 @@ export default function HomeScreen() {
         try {
           location = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
-            timeInterval: 5000, 
+            timeInterval: 5000,
           });
         } catch (locationError) {
           console.error("Error getting location:", locationError);
 
           console.log("Using fallback location coordinates");
-          const defaultLatitude = 6.6085; 
+          const defaultLatitude = 6.6085;
           const defaultLongitude = 80.1429;
 
-  
           try {
             const API_URL =
               "http://your-backend-url.com/api/environmental-data";
@@ -125,9 +121,7 @@ export default function HomeScreen() {
           return;
         }
 
- 
         const { latitude, longitude } = location.coords;
-
 
         const API_URL = "http://your-backend-url.com/api/environmental-data";
 
@@ -163,7 +157,6 @@ export default function HomeScreen() {
     };
 
     fetchEnvironmentalData();
-
 
     const intervalId = setInterval(fetchEnvironmentalData, 15 * 60 * 1000);
 
@@ -240,7 +233,10 @@ export default function HomeScreen() {
               <Text style={styles.featureText}>Identify Diseases</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.featureCard}>
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => router.push("/marketplace")}
+            >
               <Image
                 source={require("../assets/images/Market-Place.png")}
                 style={styles.featureIcon}

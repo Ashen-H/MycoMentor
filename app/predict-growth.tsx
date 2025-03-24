@@ -12,6 +12,35 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+
+// API base URL - change to your Flask server address
+const API_URL = "http://192.168.1.200:5000";
+
+// Type definitions
+interface PredictionResult {
+  class: string;
+  confidence: number;
+  harvesting_estimate: string;
+  bounding_box: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    width: number;
+    height: number;
+  };
+}
+
+interface ApiResponse {
+  predictions: PredictionResult[];
+  processing_time_ms: number;
+  image_dimensions: {
+    width: number;
+    height: number;
+  };
+}
 
 export default function PredictGrowthScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -19,36 +48,198 @@ export default function PredictGrowthScreen() {
   const [showResults, setShowResults] = useState<boolean>(false);
   const [mushroomType, setMushroomType] = useState<string>("button");
   const [growthStage, setGrowthStage] = useState<string>("mycelium");
+  const [predictionResults, setPredictionResults] = useState<PredictionResult[]>([]);
+  const [processingTime, setProcessingTime] = useState<number>(0);
 
-  const pickImage = () => {
-    // Placeholder for image picker functionality
-    setImage("image_selected");
-    Alert.alert("Gallery", "Image selected from gallery");
+  // Request camera and media library permissions
+  const requestPermissions = async () => {
+    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (cameraStatus !== 'granted' || mediaStatus !== 'granted') {
+      Alert.alert(
+        "Permissions Required",
+        "Please grant camera and media library permissions to use this feature."
+      );
+      return false;
+    }
+    return true;
   };
 
-  const takePhoto = () => {
-    // Placeholder for camera functionality
-    setImage("photo_taken");
-    Alert.alert("Camera", "Photo taken with camera");
+  // Pick image from gallery
+  const pickImage = async () => {
+    if (!(await requestPermissions())) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true, // Get base64 encoding for API
+      });
+
+      if (!result.canceled && result.assets && result.assets[0].uri) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to select image from gallery");
+    }
   };
 
-  const analyzeGrowth = () => {
+  // Take photo with camera
+  const takePhoto = async () => {
+    if (!(await requestPermissions())) return;
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true, // Get base64 encoding for API
+      });
+
+      if (!result.canceled && result.assets && result.assets[0].uri) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo");
+    }
+  };
+
+  // Convert image to base64 if not already
+  const getBase64FromUri = async (uri: string): Promise<string> => {
+    try {
+      // Check if we already have base64 data
+      if (uri.startsWith('data:image')) {
+        return uri.split(',')[1]; // Return the base64 part only
+      }
+      
+      // Read the file and convert to base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return base64;
+    } catch (error) {
+      console.error("Error converting to base64:", error);
+      throw new Error("Failed to convert image");
+    }
+  };
+
+  // Send image to API for analysis
+  const analyzeGrowth = async () => {
     if (!image) {
       Alert.alert("No Image", "Please select or take a photo of your mushroom growth first.");
       return;
     }
     
-    // Simulate analysis
     setIsAnalyzing(true);
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    
+    try {
+      // Get base64 data
+      const base64Data = await getBase64FromUri(image);
+      
+      // Prepare request body
+      const body = JSON.stringify({
+        image: base64Data,
+        mushroom_type: mushroomType, // Optional, if your API supports filtering
+        growth_stage: growthStage,    // Optional, if your API supports filtering
+      });
+      
+      // Send request to API
+      const response = await fetch(`${API_URL}/predict`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
+      }
+      
+      // Parse response
+      const data: ApiResponse = await response.json();
+      
+      // Store results
+      setPredictionResults(data.predictions);
+      setProcessingTime(data.processing_time_ms);
       setShowResults(true);
-    }, 2000);
+      
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      Alert.alert("Analysis Failed", "Could not analyze the image. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
+  // Reset all states for a new prediction
   const resetPrediction = () => {
     setImage(null);
     setShowResults(false);
+    setPredictionResults([]);
+    setProcessingTime(0);
+  };
+
+  // Calculate overall progress based on detected mushroom type and stage
+  const calculateProgress = (): number => {
+    if (predictionResults.length === 0) return 25; // Default progress
+    
+    // Simple calculation based on mushroom type
+    // In a real app, you'd use more sophisticated logic
+    const topPrediction = predictionResults[0];
+    const mushroomTypeProgressMap: {[key: string]: number} = {
+      "pink_oyster": 80,
+      "oyster": 70,
+      "shiitake": 60,
+      "button": 50,
+      "portobello": 40
+    };
+    
+    return mushroomTypeProgressMap[topPrediction.class] || 25;
+  };
+
+  // Render the result information from API
+  const renderResultDetails = () => {
+    if (predictionResults.length === 0) {
+      return (
+        <Text style={styles.resultText}>
+          No mushrooms detected in the image. Try another photo with clearer view of the mushrooms.
+        </Text>
+      );
+    }
+    
+    // Show top prediction
+    const topPrediction = predictionResults[0];
+    
+    return (
+      <>
+        <Text style={styles.resultItem}>
+          <Text style={styles.resultLabel}>Mushroom Type: </Text>
+          <Text style={styles.resultValue}>{topPrediction.class.replace('_', ' ')}</Text>
+        </Text>
+        
+        <Text style={styles.resultItem}>
+          <Text style={styles.resultLabel}>Confidence: </Text>
+          <Text style={styles.resultValue}>{(topPrediction.confidence * 100).toFixed(1)}%</Text>
+        </Text>
+        
+        <Text style={styles.resultItem}>
+          <Text style={styles.resultLabel}>Estimated Harvest Time: </Text>
+          <Text style={styles.resultValue}>{topPrediction.harvesting_estimate}</Text>
+        </Text>
+        
+        <Text style={styles.resultNote}>
+          We detected {predictionResults.length > 1 ? `${predictionResults.length} mushrooms` : '1 mushroom'} in the image.
+          Processing time: {processingTime}ms
+        </Text>
+      </>
+    );
   };
 
   return (
@@ -76,9 +267,8 @@ export default function PredictGrowthScreen() {
         {/* Image Preview */}
         {image && (
           <View style={styles.imageContainer}>
-            {/* Use a placeholder image for the demo */}
             <Image 
-              source={require('../assets/images/mushroom-bg.png')} 
+              source={{ uri: image }} 
               style={styles.mushroomImage} 
             />
             <TouchableOpacity style={styles.resetButton} onPress={resetPrediction}>
@@ -182,7 +372,7 @@ export default function PredictGrowthScreen() {
           </View>
         )}
 
-        {/* Results Placeholder */}
+        {/* Results Display */}
         {showResults && (
           <View style={styles.resultsContainer}>
             <View style={styles.resultHeader}>
@@ -190,17 +380,14 @@ export default function PredictGrowthScreen() {
             </View>
             
             <View style={styles.resultContent}>
-              <Text style={styles.resultText}>
-                This is where the growth prediction results will be displayed. 
-                You'll connect this to your model later.
-              </Text>
+              {renderResultDetails()}
             </View>
             
             <View style={styles.progressSection}>
               <Text style={styles.progressTitle}>Growth Progress</Text>
               <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBar, { width: "25%" }]} />
-                <Text style={styles.progressText}>25% Complete</Text>
+                <View style={[styles.progressBar, { width: `${calculateProgress()}%` }]} />
+                <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
               </View>
             </View>
             
@@ -392,6 +579,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     lineHeight: 24,
+  },
+  resultItem: {
+    marginBottom: 8,
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  resultLabel: {
+    fontWeight: "bold",
+    color: "#444",
+  },
+  resultValue: {
+    color: "#222",
+  },
+  resultNote: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#777",
+    fontStyle: "italic",
   },
   progressSection: {
     backgroundColor: "#f9f9f9",
