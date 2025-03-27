@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Dimensions
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -46,10 +47,10 @@ export default function PredictGrowthScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [showResults, setShowResults] = useState<boolean>(false);
-  const [mushroomType, setMushroomType] = useState<string>("button");
-  const [growthStage, setGrowthStage] = useState<string>("mycelium");
+  const [mushroomType, setMushroomType] = useState<string>("pink_oyster");
   const [predictionResults, setPredictionResults] = useState<PredictionResult[]>([]);
   const [processingTime, setProcessingTime] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Request camera and media library permissions
   const requestPermissions = async () => {
@@ -76,11 +77,12 @@ export default function PredictGrowthScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-        base64: true, // Get base64 encoding for API
       });
 
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setImage(result.assets[0].uri);
+        setShowResults(false); // Reset results when new image selected
+        setError(null); // Clear any previous errors
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -97,11 +99,12 @@ export default function PredictGrowthScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-        base64: true, // Get base64 encoding for API
       });
 
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setImage(result.assets[0].uri);
+        setShowResults(false); // Reset results when new image selected
+        setError(null); // Clear any previous errors
       }
     } catch (error) {
       console.error("Error taking photo:", error);
@@ -109,7 +112,7 @@ export default function PredictGrowthScreen() {
     }
   };
 
-  // Convert image to base64 if not already
+  // Convert image to base64
   const getBase64FromUri = async (uri: string): Promise<string> => {
     try {
       // Check if we already have base64 data
@@ -136,6 +139,7 @@ export default function PredictGrowthScreen() {
     }
     
     setIsAnalyzing(true);
+    setError(null);
     
     try {
       // Get base64 data
@@ -144,9 +148,10 @@ export default function PredictGrowthScreen() {
       // Prepare request body
       const body = JSON.stringify({
         image: base64Data,
-        mushroom_type: mushroomType, // Optional, if your API supports filtering
-        growth_stage: growthStage,    // Optional, if your API supports filtering
+        mushroom_type: mushroomType
       });
+      
+      console.log(`Sending request to ${API_URL}/predict with selected mushroom type: ${mushroomType}`);
       
       // Send request to API
       const response = await fetch(`${API_URL}/predict`, {
@@ -164,15 +169,22 @@ export default function PredictGrowthScreen() {
       
       // Parse response
       const data: ApiResponse = await response.json();
+      console.log("Received data:", data);
       
-      // Store results
-      setPredictionResults(data.predictions);
-      setProcessingTime(data.processing_time_ms);
-      setShowResults(true);
+      // Check if we have any predictions
+      if (!data.predictions || data.predictions.length === 0) {
+        setError("No mushrooms detected in the image. Please try another photo with a clearer view.");
+      } else {
+        // Store results
+        setPredictionResults(data.predictions);
+        setProcessingTime(data.processing_time_ms);
+        setShowResults(true);
+      }
       
     } catch (error) {
       console.error("Error analyzing image:", error);
-      Alert.alert("Analysis Failed", "Could not analyze the image. Please try again.");
+      setError(`Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      Alert.alert("Analysis Failed", "Could not analyze the image. Please check your connection and try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -184,24 +196,29 @@ export default function PredictGrowthScreen() {
     setShowResults(false);
     setPredictionResults([]);
     setProcessingTime(0);
+    setError(null);
   };
 
-  // Calculate overall progress based on detected mushroom type and stage
+  // Calculate overall progress based on detected mushroom type
   const calculateProgress = (): number => {
     if (predictionResults.length === 0) return 25; // Default progress
     
-    // Simple calculation based on mushroom type
-    // In a real app, you'd use more sophisticated logic
+    // Simple progress calculation based on confidence
     const topPrediction = predictionResults[0];
-    const mushroomTypeProgressMap: {[key: string]: number} = {
-      "pink_oyster": 80,
-      "oyster": 70,
-      "shiitake": 60,
-      "button": 50,
-      "portobello": 40
-    };
     
-    return mushroomTypeProgressMap[topPrediction.class] || 25;
+    // Base progress starts at 50%
+    const baseProgress = 50;
+    
+    // Add up to 40% based on confidence
+    const confidenceBoost = Math.floor(topPrediction.confidence * 40);
+    
+    // Return total progress capped at 95%
+    return Math.min(95, baseProgress + confidenceBoost);
+  };
+
+  // Format a confidence value as percentage
+  const formatConfidence = (confidence: number): string => {
+    return (confidence * 100).toFixed(1) + "%";
   };
 
   // Render the result information from API
@@ -209,7 +226,7 @@ export default function PredictGrowthScreen() {
     if (predictionResults.length === 0) {
       return (
         <Text style={styles.resultText}>
-          No mushrooms detected in the image. Try another photo with clearer view of the mushrooms.
+          No mushrooms detected in the image. Try another photo with a clearer view of the mushrooms.
         </Text>
       );
     }
@@ -226,7 +243,7 @@ export default function PredictGrowthScreen() {
         
         <Text style={styles.resultItem}>
           <Text style={styles.resultLabel}>Confidence: </Text>
-          <Text style={styles.resultValue}>{(topPrediction.confidence * 100).toFixed(1)}%</Text>
+          <Text style={styles.resultValue}>{formatConfidence(topPrediction.confidence)}</Text>
         </Text>
         
         <Text style={styles.resultItem}>
@@ -235,8 +252,10 @@ export default function PredictGrowthScreen() {
         </Text>
         
         <Text style={styles.resultNote}>
-          We detected {predictionResults.length > 1 ? `${predictionResults.length} mushrooms` : '1 mushroom'} in the image.
-          Processing time: {processingTime}ms
+          {predictionResults.length > 1 
+            ? `We detected ${predictionResults.length} mushrooms in the image.` 
+            : `We detected 1 mushroom in the image.`}
+          {processingTime > 0 && ` Processing time: ${processingTime}ms`}
         </Text>
       </>
     );
@@ -259,7 +278,7 @@ export default function PredictGrowthScreen() {
             <Ionicons name="leaf-outline" size={60} color="#6da77f" style={styles.instructionIcon} />
             <Text style={styles.instructionsTitle}>Growth Prediction</Text>
             <Text style={styles.instructionsText}>
-              Take a photo of your growing mushrooms to predict their growth timeline, harvest date, and get personalized recommendations.
+              Take a photo of your growing mushrooms to predict their growth timeline and harvest date. This model works best with Pink Oyster mushrooms.
             </Text>
           </View>
         )}
@@ -283,12 +302,13 @@ export default function PredictGrowthScreen() {
             <Text style={styles.selectorLabel}>Mushroom Type</Text>
             <View style={styles.typeButtonsContainer}>
               <TouchableOpacity 
-                style={[styles.typeButton, mushroomType === "button" && styles.selectedTypeButton]} 
-                onPress={() => setMushroomType("button")}
+                style={[styles.typeButton, mushroomType === "pink_oyster" && styles.selectedTypeButton, styles.recommendedButton]} 
+                onPress={() => setMushroomType("pink_oyster")}
               >
-                <Text style={[styles.typeButtonText, mushroomType === "button" && styles.selectedTypeButtonText]}>
-                  Button
+                <Text style={[styles.typeButtonText, mushroomType === "pink_oyster" && styles.selectedTypeButtonText]}>
+                  Pink Oyster
                 </Text>
+                <Text style={styles.recommendedLabel}>Recommended</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -309,36 +329,14 @@ export default function PredictGrowthScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-            
-            <Text style={styles.selectorLabel}>Growth Stage</Text>
-            <View style={styles.typeButtonsContainer}>
-              <TouchableOpacity 
-                style={[styles.typeButton, growthStage === "mycelium" && styles.selectedTypeButton]} 
-                onPress={() => setGrowthStage("mycelium")}
-              >
-                <Text style={[styles.typeButtonText, growthStage === "mycelium" && styles.selectedTypeButtonText]}>
-                  Mycelium
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.typeButton, growthStage === "pinhead" && styles.selectedTypeButton]} 
-                onPress={() => setGrowthStage("pinhead")}
-              >
-                <Text style={[styles.typeButtonText, growthStage === "pinhead" && styles.selectedTypeButtonText]}>
-                  Pinhead
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.typeButton, growthStage === "mature" && styles.selectedTypeButton]} 
-                onPress={() => setGrowthStage("mature")}
-              >
-                <Text style={[styles.typeButtonText, growthStage === "mature" && styles.selectedTypeButtonText]}>
-                  Mature
-                </Text>
-              </TouchableOpacity>
-            </View>
+          </View>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={24} color="#d95555" />
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
@@ -531,6 +529,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
+  recommendedButton: {
+    borderColor: "#6da77f",
+    borderWidth: 2,
+  },
+  recommendedLabel: {
+    fontSize: 10,
+    color: "#6da77f",
+    marginTop: 4,
+  },
   analyzeButton: {
     backgroundColor: "#6da77f",
     borderRadius: 8,
@@ -640,4 +647,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  errorContainer: {
+    margin: 16,
+    padding: 12,
+    backgroundColor: "#fff8f8",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ffdddd",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  errorText: {
+    marginLeft: 8,
+    flex: 1,
+    color: "#d95555",
+    fontSize: 14,
+  }
 });

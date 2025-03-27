@@ -11,13 +11,13 @@ import { router } from "expo-router";
 
 export default function LandingScreen() {
   const handleSignIn = () => {
-    // Add your sign in logic here
+
     router.push('/login');
 
   };
 
   const handleGoogleSignIn = () => {
-    // Add Google sign in logic here
+ 
     router.push("/register");
   };
 

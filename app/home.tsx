@@ -16,8 +16,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Location from "expo-location";
+import * as SecureStore from 'expo-secure-store';
 
 export default function HomeScreen() {
+  const [userName, setUserName] = useState("User");
   const [envData, setEnvData] = useState({
     temperature: "00",
     humidity: "00",
@@ -28,6 +30,9 @@ export default function HomeScreen() {
   });
 
   useEffect(() => {
+    // Fetch user data when component mounts
+    fetchUserData();
+    
     const fetchEnvironmentalData = async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
@@ -163,12 +168,56 @@ export default function HomeScreen() {
     return () => clearInterval(intervalId);
   }, []);
 
+  const fetchUserData = async () => {
+    try {
+      // Get the authentication token
+      const token = await SecureStore.getItemAsync('userToken');
+      
+      if (!token) {
+        console.log("No authentication token found");
+        router.replace("/(public)/login");
+        return;
+      }
+      
+      // Make a request to get user data
+      const response = await fetch('http://192.168.1.200:5001/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        }
+      });
+      
+      if (!response.ok) {
+        // If token is invalid or expired
+        if (response.status === 401) {
+          await SecureStore.deleteItemAsync('userToken');
+          router.replace("/(public)/login");
+          return;
+        }
+        throw new Error('Failed to fetch user data');
+      }
+      
+      const userData = await response.json();
+      
+      // Extract the first name from the full name
+      const fullName = userData.fullName || '';
+      const firstName = fullName.split(' ')[0];
+      
+      setUserName(firstName || 'User');
+      
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      // Keep the default user name if there's an error
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Hi, User!</Text>
+          <Text style={styles.greeting}>Hi, {userName}!</Text>
         </View>
         <TouchableOpacity style={styles.notificationIcon}>
           <Ionicons name="notifications-outline" size={24} color="black" />

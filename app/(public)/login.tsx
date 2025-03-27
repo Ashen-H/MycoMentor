@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Image,
@@ -24,6 +24,34 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [justLoggedOut, setJustLoggedOut] = useState(false);
+
+
+  useEffect(() => {
+    checkLogoutStatus();
+  }, []);
+
+  const checkLogoutStatus = async () => {
+    try {
+      const logoutStatus = await SecureStore.getItemAsync('justLoggedOut');
+      if (logoutStatus === 'true') {
+        setJustLoggedOut(true);
+ 
+        await SecureStore.deleteItemAsync('justLoggedOut');
+      }
+    } catch (error) {
+      console.error("Error checking logout status:", error);
+    }
+  };
+
+  const handleBackPress = () => {
+
+    if (justLoggedOut) {
+      router.replace("/");
+    } else {
+      router.back();
+    }
+  };
 
   const validateInputs = () => {
     if (!email.trim()) {
@@ -47,7 +75,7 @@ export default function LoginScreen() {
     setIsLoading(true);
     
     try {
-      // Replace with your actual backend API URL
+      
       const apiUrl = 'http://192.168.1.200:5001/api/auth/login';
       
       const response = await fetch(apiUrl, {
@@ -56,7 +84,7 @@ export default function LoginScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email, // Your backend should handle both email and username login
+          email, 
           password,
         }),
       });
@@ -67,16 +95,20 @@ export default function LoginScreen() {
         throw new Error(data.error || 'Login failed');
       }
       
-      // Store the token securely
+  
+      await SecureStore.deleteItemAsync('justLoggedOut');
+ 
+
       await SecureStore.setItemAsync('userToken', data.token);
-      
-      // Login successful - navigate to home screen
+
+      setEmail("");
+      setPassword("");
+
       router.push("/home");
       
     } catch (error) {
       console.error("Login error:", error);
-      
-      // Handle error
+ 
       let errorMessage = "Something went wrong. Please try again later.";
       
       if (error instanceof Error) {
@@ -113,7 +145,7 @@ export default function LoginScreen() {
              
             {/* Header */}
             <View style={styles.header}>
-              <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Pressable onPress={handleBackPress} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="black" />
               </Pressable>
               <Link href="/register" asChild>
@@ -178,7 +210,7 @@ export default function LoginScreen() {
                   </View>
 
                   <TouchableOpacity 
-                    onPress={() => router.push("/reset")}
+                    onPress={() => router.push("/(public)/reset")}
                     disabled={isLoading}
                   >
                     <Text style={styles.forgotPassword}>Forgot Password?</Text>

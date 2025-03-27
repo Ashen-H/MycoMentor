@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useTheme } from "../app/ThemeContext";
 
 export default function SettingsScreen() {
+  // Get theme context
+  const { isDark, colors, setIsDark } = useTheme();
+
   // State for various settings
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [locationAccess, setLocationAccess] = useState(true);
   const [dataSync, setDataSync] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
@@ -77,144 +80,144 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
       </View>
 
       <ScrollView style={styles.scrollView}>
         {/* Account Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Account</Text>
           
           <TouchableOpacity 
             style={styles.settingItem}
             onPress={handleAccountSettings}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="person-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Account Settings</Text>
+              <Ionicons name="person-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Account Settings</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#6da77f" />
+            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Appearance Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Appearance</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="moon-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Dark Mode</Text>
+              <Ionicons name="moon-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Dark Mode</Text>
             </View>
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
+              value={isDark}
+              onValueChange={setIsDark}
               trackColor={{ false: "#D3D3D3", true: "#A5D6A7" }}
-              thumbColor={darkMode ? "#6da77f" : "#f4f3f4"}
+              thumbColor={isDark ? colors.primary : "#f4f3f4"}
             />
           </View>
         </View>
 
         {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Notifications</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Push Notifications</Text>
+              <Ionicons name="notifications-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Push Notifications</Text>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
               trackColor={{ false: "#D3D3D3", true: "#A5D6A7" }}
-              thumbColor={notifications ? "#6da77f" : "#f4f3f4"}
+              thumbColor={notifications ? colors.primary : "#f4f3f4"}
             />
           </View>
         </View>
 
         {/* Privacy & Data Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Privacy & Data</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Privacy & Data</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="location-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Location Access</Text>
+              <Ionicons name="location-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Location Access</Text>
             </View>
             <Switch
               value={locationAccess}
               onValueChange={setLocationAccess}
               trackColor={{ false: "#D3D3D3", true: "#A5D6A7" }}
-              thumbColor={locationAccess ? "#6da77f" : "#f4f3f4"}
+              thumbColor={locationAccess ? colors.primary : "#f4f3f4"}
             />
           </View>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="analytics-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Analytics</Text>
+              <Ionicons name="analytics-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Analytics</Text>
             </View>
             <Switch
               value={analyticsEnabled}
               onValueChange={setAnalyticsEnabled}
               trackColor={{ false: "#D3D3D3", true: "#A5D6A7" }}
-              thumbColor={analyticsEnabled ? "#6da77f" : "#f4f3f4"}
+              thumbColor={analyticsEnabled ? colors.primary : "#f4f3f4"}
             />
           </View>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="sync-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Background Data Sync</Text>
+              <Ionicons name="sync-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Background Data Sync</Text>
             </View>
             <Switch
               value={dataSync}
               onValueChange={setDataSync}
               trackColor={{ false: "#D3D3D3", true: "#A5D6A7" }}
-              thumbColor={dataSync ? "#6da77f" : "#f4f3f4"}
+              thumbColor={dataSync ? colors.primary : "#f4f3f4"}
             />
           </View>
         </View>
 
         {/* Preferences Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Preferences</Text>
           
           <TouchableOpacity 
             style={styles.settingItem}
             onPress={toggleUnits}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="options-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Measurement Units</Text>
+              <Ionicons name="options-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Measurement Units</Text>
             </View>
             <View style={styles.unitsSelector}>
-              <Text style={styles.unitsSelectorText}>
+              <Text style={[styles.unitsSelectorText, { color: colors.placeholder }]}>
                 {units === "metric" ? "Metric (°C, cm)" : "Imperial (°F, in)"}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#6da77f" style={{marginLeft: 8}} />
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} style={{marginLeft: 8}} />
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Data Management Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data Management</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Data Management</Text>
           
           <TouchableOpacity 
             style={styles.settingItem}
             onPress={handleClearCache}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="trash-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Clear Cache</Text>
+              <Ionicons name="trash-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Clear Cache</Text>
             </View>
           </TouchableOpacity>
           
@@ -223,30 +226,30 @@ export default function SettingsScreen() {
             onPress={handleExportData}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="download-outline" size={22} color="#333" style={styles.settingIcon} />
-              <Text style={styles.settingText}>Export Data</Text>
+              <Ionicons name="download-outline" size={22} color={colors.text} style={styles.settingIcon} />
+              <Text style={[styles.settingText, { color: colors.text }]}>Export Data</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
         <View style={styles.dangerSection}>
-          <Text style={styles.dangerSectionTitle}>Danger Zone</Text>
+          <Text style={[styles.dangerSectionTitle, { color: colors.dangerText }]}>Danger Zone</Text>
           
           <TouchableOpacity 
             style={styles.dangerItem}
             onPress={handleDeleteAccount}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="warning-outline" size={22} color="#d32f2f" style={styles.settingIcon} />
-              <Text style={styles.dangerText}>Delete Account</Text>
+              <Ionicons name="warning-outline" size={22} color={colors.dangerText} style={styles.settingIcon} />
+              <Text style={[styles.dangerText, { color: colors.dangerText }]}>Delete Account</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* App Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>MYCOMENTOR v1.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.versionText }]}>MYCOMENTOR v1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -256,7 +259,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -264,7 +266,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eeeeee",
   },
   backButton: {
     padding: 8,
@@ -279,13 +280,11 @@ const styles = StyleSheet.create({
   },
   section: {
     borderBottomWidth: 1,
-    borderBottomColor: "#eeeeee",
     paddingVertical: 12,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#6da77f",
     marginHorizontal: 16,
     marginBottom: 8,
   },
@@ -305,7 +304,6 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 16,
-    color: "#333",
   },
   unitsSelector: {
     flexDirection: "row",
@@ -313,7 +311,6 @@ const styles = StyleSheet.create({
   },
   unitsSelectorText: {
     fontSize: 14,
-    color: "#666",
   },
   dangerSection: {
     paddingVertical: 12,
@@ -322,7 +319,6 @@ const styles = StyleSheet.create({
   dangerSectionTitle: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#d32f2f",
     marginHorizontal: 16,
     marginBottom: 8,
   },
@@ -335,7 +331,6 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     fontSize: 16,
-    color: "#d32f2f",
   },
   versionContainer: {
     padding: 24,
@@ -343,6 +338,5 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 14,
-    color: "#999",
   },
 });
