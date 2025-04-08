@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { router, Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -26,18 +26,17 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [justLoggedOut, setJustLoggedOut] = useState(false);
 
-
   useEffect(() => {
     checkLogoutStatus();
   }, []);
 
   const checkLogoutStatus = async () => {
     try {
-      const logoutStatus = await SecureStore.getItemAsync('justLoggedOut');
-      if (logoutStatus === 'true') {
+      const logoutStatus = await SecureStore.getItemAsync("justLoggedOut");
+      if (logoutStatus === "true") {
         setJustLoggedOut(true);
- 
-        await SecureStore.deleteItemAsync('justLoggedOut');
+
+        await SecureStore.deleteItemAsync("justLoggedOut");
       }
     } catch (error) {
       console.error("Error checking logout status:", error);
@@ -45,7 +44,6 @@ export default function LoginScreen() {
   };
 
   const handleBackPress = () => {
-
     if (justLoggedOut) {
       router.replace("/");
     } else {
@@ -58,65 +56,64 @@ export default function LoginScreen() {
       Alert.alert("Error", "Please enter your email or username");
       return false;
     }
-    
+
     if (!password) {
       Alert.alert("Error", "Please enter your password");
       return false;
     }
-    
+
     return true;
   };
 
   const handleLogin = async () => {
-    if (!validateInputs()) {
-      return;
-    }
-    
-    setIsLoading(true);
-    
+    // if (!validateInputs()) {
+    //   return;
+    // }
+
+    // setIsLoading(true);
+
     try {
-      
-      const apiUrl = 'http://192.168.1.200:5001/api/auth/login';
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email, 
-          password,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-      
-  
-      await SecureStore.deleteItemAsync('justLoggedOut');
- 
+      // const apiUrl = 'http://172.20.10.2:5001/api/auth/login';
 
-      await SecureStore.setItemAsync('userToken', data.token);
+      // const response = await fetch(apiUrl, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     email,
+      //     password,
+      //   }),
+      // });
 
-      setEmail("");
-      setPassword("");
+      // const data = await response.json();
+
+      // if (!response.ok) {
+      //   throw new Error(data.error || 'Login failed');
+      // }
+
+      // await SecureStore.deleteItemAsync('justLoggedOut');
+
+      // await SecureStore.setItemAsync('userToken', data.token);
+
+      // setEmail("");
+      // setPassword("");
 
       router.push("/home");
-      
     } catch (error) {
       console.error("Login error:", error);
- 
+
       let errorMessage = "Something went wrong. Please try again later.";
-      
+
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
-      if (errorMessage.includes('Invalid credentials')) {
-        Alert.alert("Login Failed", "Invalid email or password. Please try again.");
+
+      if (errorMessage.includes("Invalid credentials")) {
+        Alert.alert(
+          "Login Failed",
+          "Invalid email or password. Please try again."
+        );
       } else {
         Alert.alert("Login Failed", errorMessage);
       }
@@ -136,13 +133,13 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
-             {/* Background Mushroom Image */}
-             <Image
-               source={require("../../assets/images/mushroom-bg.png")}
-               style={styles.mushroomBackground}
-               resizeMode="contain"
-             />
-             
+            {/* Background Mushroom Image */}
+            <Image
+              source={require("../../assets/images/mushroom-bg.png")}
+              style={styles.mushroomBackground}
+              resizeMode="contain"
+            />
+
             {/* Header */}
             <View style={styles.header}>
               <Pressable onPress={handleBackPress} style={styles.backButton}>
@@ -159,7 +156,8 @@ export default function LoginScreen() {
             <View style={styles.content}>
               <Text style={styles.title}>Login</Text>
               <Text style={styles.subtitle}>
-                Login to your account - enjoy exclusive{"\n"}features and many more.
+                Login to your account - enjoy exclusive{"\n"}features and many
+                more.
               </Text>
             </View>
 
@@ -209,15 +207,18 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => router.push("/(public)/reset")}
                     disabled={isLoading}
                   >
                     <Text style={styles.forgotPassword}>Forgot Password?</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
-                    style={[styles.loginButton, isLoading && styles.disabledButton]} 
+                  <TouchableOpacity
+                    style={[
+                      styles.loginButton,
+                      isLoading && styles.disabledButton,
+                    ]}
                     onPress={handleLogin}
                     disabled={isLoading}
                   >

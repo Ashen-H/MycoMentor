@@ -17,8 +17,9 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 
 // API base URL - change to your Flask server address
-const API_URL = "http://192.168.1.200:5000";
+const API_URL = "http://172.20.10.2:5000";
 
+ 
 // Type definitions
 interface PredictionResult {
   class: string;

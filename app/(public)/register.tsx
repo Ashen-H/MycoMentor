@@ -21,7 +21,7 @@ import Constants from "expo-constants";
 
 
 const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.1.200:5000' 
+  ? 'http://172.20.10.2:5001' 
   : 'https://your-production-backend.com';
 
 export default function RegisterScreen() {

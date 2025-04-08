@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 
 
-const API_URL = "http://192.168.1.200:5001/api";
+const API_URL = "http://172.20.10.2:5001/api";
 
 export default function ProfileScreen() {
   const [userData, setUserData] = useState({

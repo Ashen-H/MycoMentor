@@ -161,7 +161,7 @@ export default function HomeScreen() {
       }
     };
 
-    fetchEnvironmentalData();
+    //fetchEnvironmentalData();
 
     const intervalId = setInterval(fetchEnvironmentalData, 15 * 60 * 1000);
 
@@ -170,41 +170,43 @@ export default function HomeScreen() {
 
   const fetchUserData = async () => {
     try {
+
+      router.replace("/(public)/login");
       // Get the authentication token
-      const token = await SecureStore.getItemAsync('userToken');
+      // const token = await SecureStore.getItemAsync('userToken');
       
-      if (!token) {
-        console.log("No authentication token found");
-        router.replace("/(public)/login");
-        return;
-      }
+      // if (!token) {
+      //   console.log("No authentication token found");
+      //   router.replace("/(public)/login");
+      //   return;
+      // }
+       
+      // // Make a request to get user data
+      // const response = await fetch(`http://172.20.10.2:5001/api/auth/me`, {
+      //   method: 'GET',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'x-auth-token': token
+      //   }
+      // });
       
-      // Make a request to get user data
-      const response = await fetch('http://192.168.1.200:5001/api/auth/me', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
+      // if (!response.ok) {
+      //   // If token is invalid or expired
+      //   if (response.status === 401) {
+      //     await SecureStore.deleteItemAsync('userToken');
+      //     router.replace("/(public)/login");
+      //     return;
+      //   }
+      //   throw new Error('Failed to fetch user data');
+      // }
       
-      if (!response.ok) {
-        // If token is invalid or expired
-        if (response.status === 401) {
-          await SecureStore.deleteItemAsync('userToken');
-          router.replace("/(public)/login");
-          return;
-        }
-        throw new Error('Failed to fetch user data');
-      }
+      // const userData = await response.json();
       
-      const userData = await response.json();
+      // // Extract the first name from the full name
+      // const fullName = userData.fullName || '';
+      // const firstName = fullName.split(' ')[0];
       
-      // Extract the first name from the full name
-      const fullName = userData.fullName || '';
-      const firstName = fullName.split(' ')[0];
-      
-      setUserName(firstName || 'User');
+      // setUserName(firstName || 'User');
       
     } catch (error) {
       console.error('Error fetching user data:', error);
