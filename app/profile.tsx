@@ -15,11 +15,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
-
+import { useTheme } from "../app/ThemeContext"; // Import the theme hook
 
 const API_URL = "http://192.168.1.200:5001/api";
 
 export default function ProfileScreen() {
+  // Get theme context
+  const { colors, isDark } = useTheme();
+  
   const [userData, setUserData] = useState({
     fullName: "",
     email: "",
@@ -33,13 +36,11 @@ export default function ProfileScreen() {
   const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
-   
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
     try {
-   
       const token = await SecureStore.getItemAsync('userToken');
       
       if (!token) {
@@ -47,7 +48,6 @@ export default function ProfileScreen() {
         router.replace("/(public)/login");
         return;
       }
-      
       
       const response = await fetch(`${API_URL}/auth/me`, {
         method: 'GET',
@@ -58,7 +58,6 @@ export default function ProfileScreen() {
       });
       
       if (!response.ok) {
-     
         if (response.status === 401) {
           await SecureStore.deleteItemAsync('userToken');
           router.replace("/(public)/login");
@@ -68,9 +67,7 @@ export default function ProfileScreen() {
         throw new Error(`Server error: ${response.status}`);
       }
       
-    
       const responseText = await response.text();
-      
       
       let data;
       try {
@@ -81,17 +78,14 @@ export default function ProfileScreen() {
         throw new Error("Failed to parse server response");
       }
       
-     
       setUserData(data);
       setUpdatedName(data.fullName || "");
       setUpdatedEmail(data.email || "");
     } catch (error) {
       console.error("Error loading user data:", error);
       
-      
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       
-   
       if (errorMessage.includes('401')) {
         await SecureStore.deleteItemAsync('userToken');
         router.replace("/(public)/login");
@@ -105,7 +99,6 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
-   
       Alert.alert(
         "Logout",
         "Are you sure you want to logout?",
@@ -117,13 +110,8 @@ export default function ProfileScreen() {
           {
             text: "Yes, Logout",
             onPress: async () => {
-            
               await SecureStore.deleteItemAsync('userToken');
-              
-           
               await SecureStore.setItemAsync('justLoggedOut', 'true');
-              
-            
               router.replace("/(public)/login");
             }
           }
@@ -142,14 +130,12 @@ export default function ProfileScreen() {
   };
 
   const handleUpdateProfile = async () => {
-   
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(updatedEmail)) {
       Alert.alert("Invalid Email", "Please enter a valid email address");
       return;
     }
 
- 
     if (!updatedName.trim()) {
       Alert.alert("Invalid Name", "Name cannot be empty");
       return;
@@ -158,7 +144,6 @@ export default function ProfileScreen() {
     try {
       setUpdateLoading(true);
       
-    
       const token = await SecureStore.getItemAsync('userToken');
       
       if (!token) {
@@ -167,7 +152,6 @@ export default function ProfileScreen() {
         return;
       }
       
-     
       const response = await fetch(
         `${API_URL}/auth/profile`,
         {
@@ -184,32 +168,26 @@ export default function ProfileScreen() {
       );
       
       if (!response.ok) {
-      
         if (response.status === 401) {
           await SecureStore.deleteItemAsync('userToken');
           router.replace("/(public)/login");
           return;
         }
         
-    
         const errorText = await response.text();
         
-       
         try {
           const errorData = JSON.parse(errorText);
           throw new Error(errorData.error || 'Failed to update profile');
         } catch (parseError) {
-
           console.error("Error parsing response:", parseError);
           console.log("Response text:", errorText.substring(0, 100) + "...");
           throw new Error(`Server error: ${response.status}`);
         }
       }
       
-
       const responseText = await response.text();
       
-
       let data;
       try {
         data = JSON.parse(responseText);
@@ -219,16 +197,13 @@ export default function ProfileScreen() {
         throw new Error("Failed to parse server response");
       }
       
-
       setUserData(data);
       
-
       setModalVisible(false);
       Alert.alert("Success", "Profile updated successfully");
     } catch (error) {
       console.error("Profile update error:", error);
       
-
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
 
       if (errorMessage.includes('Email already in use')) {
@@ -243,110 +218,113 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6da77f" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.primary }]}>Loading profile...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
       </View>
 
       {/* Profile Section */}
       <View style={styles.profileSection}>
-        <View style={styles.profileImageContainer}>
-          <Ionicons name="person-circle-outline" size={50} color="#666" />
+        <View style={[styles.profileImageContainer, { backgroundColor: colors.cardBackground }]}>
+          <Ionicons name="person-circle-outline" size={50} color={colors.text} />
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{userData.fullName}</Text>
-          <Text style={styles.profileEmail}>{userData.email}</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>{userData.fullName}</Text>
+          <Text style={[styles.profileEmail, { color: colors.placeholder }]}>{userData.email}</Text>
         </View>
         <TouchableOpacity style={styles.editButton} onPress={openUpdateModal}>
-          <Ionicons name="pencil" size={24} color="black" />
+          <Ionicons name="pencil" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.separator} />
+      <View style={[styles.separator, { backgroundColor: colors.border }]} />
 
-      <Text style={styles.sectionTitle}>Manage Account</Text>
+      <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Manage Account</Text>
       <ScrollView style={styles.menuContainer}>
         {/* Settings Option */}
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push("/settings")}
         >
           <View style={styles.menuIconContainer}>
-            <Ionicons name="settings-outline" size={24} color="#333" />
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
           </View>
-          <Text style={styles.menuText}>Setting</Text>
-          <Ionicons name="chevron-forward" size={24} color="#6da77f" />
+          <Text style={[styles.menuText, { color: colors.text }]}>Setting</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
 
         {/* Help & Feedback Option */}
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push("/help-feedback")}
         >
           <View style={styles.menuIconContainer}>
             <Ionicons
               name="chatbubble-ellipses-outline"
               size={24}
-              color="#333"
+              color={colors.text}
             />
           </View>
-          <Text style={styles.menuText}>Help & Feedback</Text>
-          <Ionicons name="chevron-forward" size={24} color="#6da77f" />
+          <Text style={[styles.menuText, { color: colors.text }]}>Help & Feedback</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
 
         {/* Logout Option */}
-        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+        <TouchableOpacity 
+          style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+          onPress={handleLogout}
+        >
           <View style={styles.menuIconContainer}>
-            <Ionicons name="log-out-outline" size={24} color="#333" />
+            <Ionicons name="log-out-outline" size={24} color={colors.text} />
           </View>
-          <Text style={styles.menuText}>Log out</Text>
+          <Text style={[styles.menuText, { color: colors.text }]}>Log out</Text>
         </TouchableOpacity>
 
-        <View style={styles.doubleSeparator} />
+        <View style={[styles.doubleSeparator, { backgroundColor: colors.cardBackground }]} />
 
-        <Text style={styles.sectionTitle}>Information</Text>
+        <Text style={[styles.sectionTitle, { color: colors.sectionTitle }]}>Information</Text>
 
         {/* About Option */}
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push("/about")}
         >
           <View style={styles.menuIconContainer}>
             <Ionicons
               name="information-circle-outline"
               size={24}
-              color="#333"
+              color={colors.text}
             />
           </View>
-          <Text style={styles.menuText}>About MYCOMENTOR</Text>
-          <Ionicons name="chevron-forward" size={24} color="#6da77f" />
+          <Text style={[styles.menuText, { color: colors.text }]}>About MYCOMENTOR</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
 
         {/* Rate App Option */}
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push("/rate-app")}
         >
           <View style={styles.menuIconContainer}>
-            <Ionicons name="star-outline" size={24} color="#333" />
+            <Ionicons name="star-outline" size={24} color={colors.text} />
           </View>
-          <Text style={styles.menuText}>Rate the App</Text>
-          <Ionicons name="chevron-forward" size={24} color="#6da77f" />
+          <Text style={[styles.menuText, { color: colors.text }]}>Rate the App</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
       </ScrollView>
 
@@ -358,38 +336,48 @@ export default function ProfileScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Update Profile</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Update Profile</Text>
             
-            <Text style={styles.inputLabel}>Full Name</Text>
+            <Text style={[styles.inputLabel, { color: colors.placeholder }]}>Full Name</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: colors.border,
+                backgroundColor: colors.inputBackground,
+                color: colors.inputText
+              }]}
               value={updatedName}
               onChangeText={setUpdatedName}
               placeholder="Enter your full name"
+              placeholderTextColor={colors.placeholder}
             />
             
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={[styles.inputLabel, { color: colors.placeholder }]}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: colors.border,
+                backgroundColor: colors.inputBackground,
+                color: colors.inputText
+              }]}
               value={updatedEmail}
               onChangeText={setUpdatedEmail}
               placeholder="Enter your email"
+              placeholderTextColor={colors.placeholder}
               keyboardType="email-address"
               autoCapitalize="none"
             />
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.cardBackground }]}
                 onPress={() => setModalVisible(false)}
                 disabled={updateLoading}
               >
-                <Text style={styles.buttonText}>Cancel</Text>
+                <Text style={[styles.buttonText, { color: colors.text }]}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+                style={[styles.modalButton, styles.saveButton, { backgroundColor: colors.primary }]}
                 onPress={handleUpdateProfile}
                 disabled={updateLoading}
               >
@@ -519,7 +507,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#7FB77E",
   },
   footerImage: {
-    bottom: 120,
+    bottom: 95,
     width: 450,
   },
   modalContainer: {

@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Slot } from 'expo-router';
 import { ThemeProvider } from '../app/ThemeContext';
-
+import { NotificationProvider } from '../app/NotificationContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,9 +26,11 @@ export default function Layout() {
 
   return (
     <ThemeProvider>
-      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-        <Slot /> {/* Renders the current screen */}
-      </View>
+      <NotificationProvider>
+        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <Slot /> {/* Renders the current screen */}
+        </View>
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

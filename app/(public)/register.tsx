@@ -21,7 +21,7 @@ import Constants from "expo-constants";
 
 
 const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.1.200:5000' 
+  ? 'http://192.168.1.200:5001' 
   : 'https://your-production-backend.com';
 
 export default function RegisterScreen() {
@@ -340,18 +340,6 @@ export default function RegisterScreen() {
                     <Text style={styles.googleButtonText}>Login with Google</Text>
                   </TouchableOpacity>
                   
-                  {/* Connection Test Button */}
-                  <TouchableOpacity 
-                    style={styles.testButton} 
-                    onPress={testBackendConnection}
-                    disabled={isTestingConnection || isLoading}
-                  >
-                    {isTestingConnection ? (
-                      <ActivityIndicator size="small" color="#555" />
-                    ) : (
-                      <Text style={styles.testButtonText}>Test Server Connection</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -429,7 +417,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   formFields: {
-    width: "100%",
+    width:"96%",
     gap: 16,
     alignItems: "center",
   },

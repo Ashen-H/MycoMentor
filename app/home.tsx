@@ -17,8 +17,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Location from "expo-location";
 import * as SecureStore from 'expo-secure-store';
+import axios from "axios";
+import { useTheme } from "../app/ThemeContext";
+import { useNotifications } from "../app/NotificationContext";
+import NotificationComponent from "../components/NotificationComponent";
 
 export default function HomeScreen() {
+  // Get theme context
+  const { colors, isDark } = useTheme();
+
+  // Get notification context
+  const { getUnreadCount, checkEnvironmentalConditions, addNotification } = useNotifications();
+
+  // Notification panel state
+  const [showNotificationPanel, setShowNotificationPanel] = useState<boolean>(false);
+
   const [userName, setUserName] = useState("User");
   const [envData, setEnvData] = useState({
     temperature: "00",
@@ -32,6 +45,30 @@ export default function HomeScreen() {
   useEffect(() => {
     // Fetch user data when component mounts
     fetchUserData();
+    
+    // Check if welcome notification has been shown after the current login
+    const checkAndShowWelcomeNotification = async () => {
+      try {
+        const welcomeShown = await SecureStore.getItemAsync('welcomeNotificationShown');
+        
+        if (!welcomeShown) {
+          // Show welcome notification only if it hasn't been shown yet
+          addNotification({
+            type: 'success',
+            title: 'Welcome to MYCOMENTOR',
+            message: 'Thanks for using our app! Check out our monitoring features.',
+            icon: 'leaf-outline'
+          });
+          
+          // Mark welcome notification as shown
+          await SecureStore.setItemAsync('welcomeNotificationShown', 'true');
+        }
+      } catch (error) {
+        console.error('Error handling welcome notification:', error);
+      }
+    };
+    
+    checkAndShowWelcomeNotification();
     
     const fetchEnvironmentalData = async () => {
       try {
@@ -93,17 +130,19 @@ export default function HomeScreen() {
           const defaultLongitude = 80.1429;
 
           try {
-            const API_URL =
-              "http://your-backend-url.com/api/environmental-data";
-            const response = await fetch(
-              `${API_URL}?latitude=${defaultLatitude}&longitude=${defaultLongitude}&fallback=true`
-            );
+            // Use your actual backend URL here
+            const API_URL = "http://192.168.1.200:5001/api/environmental-data";
+            
+            // Use axios instead of fetch for better error handling
+            const response = await axios.get(API_URL, {
+              params: {
+                latitude: defaultLatitude,
+                longitude: defaultLongitude,
+                fallback: true
+              }
+            });
 
-            if (!response.ok) {
-              throw new Error("Failed to fetch data from server");
-            }
-
-            const data = await response.json();
+            const data = response.data;
 
             setEnvData({
               temperature: data.temperature?.toString() || "00",
@@ -113,14 +152,12 @@ export default function HomeScreen() {
               loading: false,
               error: "Using approximate location" as string | null,
             });
-          } catch (apiError) {
+          } catch (apiError: any) { // Type assertion for apiError
+            console.error("API Error details:", apiError.response?.data || apiError.message);
             setEnvData((prev) => ({
               ...prev,
               loading: false,
-              error:
-                apiError instanceof Error
-                  ? apiError.message
-                  : "An unknown error occurred",
+              error: "Failed to fetch environmental data",
             }));
           }
           return;
@@ -128,17 +165,15 @@ export default function HomeScreen() {
 
         const { latitude, longitude } = location.coords;
 
-        const API_URL = "http://your-backend-url.com/api/environmental-data";
+        // Use your actual backend URL here
+        const API_URL = "http://192.168.1.200:5001/api/environmental-data";
 
-        const response = await fetch(
-          `${API_URL}?latitude=${latitude}&longitude=${longitude}`
-        );
+        // Use axios instead of fetch
+        const response = await axios.get(API_URL, {
+          params: { latitude, longitude }
+        });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch data from server");
-        }
-
-        const data = await response.json();
+        const data = response.data;
 
         setEnvData({
           temperature: data.temperature?.toString() || "00",
@@ -148,15 +183,23 @@ export default function HomeScreen() {
           loading: false,
           error: null,
         });
-      } catch (error) {
+
+        // Check environmental conditions for notifications
+        if (!data.error) {
+          checkEnvironmentalConditions({
+            temperature: data.temperature?.toString(),
+            humidity: data.humidity?.toString(),
+            intensity: data.intensity?.toString(),
+            pH: data.pH?.toString()
+          });
+        }
+      } catch (error: any) { // Type assertion for error
         console.error("Error fetching environmental data:", error);
+        console.error("Error response:", error.response?.data);
         setEnvData((prev) => ({
           ...prev,
           loading: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
+          error: "Failed to fetch environmental data",
         }));
       }
     };
@@ -192,6 +235,7 @@ export default function HomeScreen() {
         // If token is invalid or expired
         if (response.status === 401) {
           await SecureStore.deleteItemAsync('userToken');
+          await SecureStore.deleteItemAsync('welcomeNotificationShown');
           router.replace("/(public)/login");
           return;
         }
@@ -212,34 +256,58 @@ export default function HomeScreen() {
     }
   };
 
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      // Clear the welcome notification flag when logging out
+      await SecureStore.deleteItemAsync('welcomeNotificationShown');
+      
+      // Clear the auth token
+      await SecureStore.deleteItemAsync('userToken');
+      
+      // Navigate to login screen
+      router.replace("/(public)/login");
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Hi, {userName}!</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>Hi, {userName}!</Text>
         </View>
-        <TouchableOpacity style={styles.notificationIcon}>
-          <Ionicons name="notifications-outline" size={24} color="black" />
+        <TouchableOpacity 
+          style={styles.notificationIcon}
+          onPress={() => setShowNotificationPanel(true)}
+        >
+          <Ionicons name="notifications-outline" size={24} color={colors.text} />
+          {getUnreadCount() > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>{getUnreadCount()}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
       {/* Welcome Text */}
       <View style={styles.welcomeContainer}>
-        <Text style={styles.welcomeText}>Welcome to </Text>
-        <Text style={styles.appName}>MYCOMENTOR</Text>
+        <Text style={[styles.welcomeText, { color: colors.text }]}>Welcome to </Text>
+        <Text style={[styles.appName, { color: colors.primary }]}>MYCOMENTOR</Text>
       </View>
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground }]}>
         <Ionicons
           name="search"
           size={20}
-          color="#666"
+          color={colors.placeholder}
           style={styles.searchIcon}
         />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.inputText }]}
           placeholder="Search here for tools..."
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.placeholder}
         />
       </View>
       {/* Main Features Grid */}
@@ -247,83 +315,74 @@ export default function HomeScreen() {
         <View style={styles.featuresGrid}>
           {/* Row 1 */}
           <View style={styles.featuresRow}>
-            <TouchableOpacity
-              style={styles.featureCard}
-              onPress={() => router.push("/detect-mushrooms")}
-            >
-              <Image
-                source={require("../assets/images/Detect-mushroom.png")}
-                style={styles.featureIcon}
-              />
-              <Text style={styles.featureText}>Detect Mushrooms</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.featureCard}
+              style={[styles.featureCard, { backgroundColor: colors.cardBackground }]}
               onPress={() => router.push("/predict-growth")}
             >
               <Image
                 source={require("../assets/images/Predict-Growth.png")}
                 style={styles.featureIcon}
               />
-              <Text style={styles.featureText}>Predict Growth</Text>
+              <Text style={[styles.featureText, { color: colors.text }]}>Predict Growth</Text>
             </TouchableOpacity>
-          </View>
-          {/* Row 2 */}
-          <View style={styles.featuresRow}>
             <TouchableOpacity
-              style={styles.featureCard}
+              style={[styles.featureCard, { backgroundColor: colors.cardBackground }]}
               onPress={() => router.push("/identify-diseases")}
             >
               <Image
                 source={require("../assets/images/Identify-Diseases.png")}
                 style={styles.featureIcon}
               />
-              <Text style={styles.featureText}>Identify Diseases</Text>
+              <Text style={[styles.featureText, { color: colors.text }]}>Identify Diseases</Text>
             </TouchableOpacity>
+          </View>
+          {/* Row 2 */}
+          <View style={styles.featuresRow}>
+
 
             <TouchableOpacity
-              style={styles.featureCard}
+              style={[styles.featureCard, { backgroundColor: colors.cardBackground }]}
               onPress={() => router.push("/marketplace")}
             >
               <Image
                 source={require("../assets/images/Market-Place.png")}
                 style={styles.featureIcon}
               />
-              <Text style={styles.featureText}>Market Place</Text>
+              <Text style={[styles.featureText, { color: colors.text }]}>Market Place</Text>
             </TouchableOpacity>
           </View>
           {/* Monitoring Section */}
           <View style={styles.monitoringSection}>
             {/* Row 1 */}
             <View style={styles.monitoringRow}>
-              <View style={styles.monitoringCard}>
-                <Ionicons name="thermometer-outline" size={24} color="black" />
-                <Text style={styles.monitoringLabel}>Temp. Control</Text>
+              <View style={[styles.monitoringCard, { backgroundColor: colors.cardBackground }]}>
+                <Ionicons name="thermometer-outline" size={24} color={colors.text} />
+                <Text style={[styles.monitoringLabel, { color: colors.text }]}>Temp. Control</Text>
                 <View style={styles.valueContainer}>
                   {envData.loading ? (
-                    <ActivityIndicator size="small" color="#666" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <>
-                      <Text style={styles.valueText}>
+                      <Text style={[styles.valueText, { color: colors.text }]}>
                         {envData.temperature}
                       </Text>
-                      <Text style={styles.unitText}>°C</Text>
+                      <Text style={[styles.unitText, { color: colors.placeholder }]}>°C</Text>
                     </>
                   )}
                 </View>
               </View>
 
-              <View style={styles.monitoringCard}>
-                <Ionicons name="sunny-outline" size={24} color="black" />
-                <Text style={styles.monitoringLabel}>Intensity</Text>
+              <View style={[styles.monitoringCard, { backgroundColor: colors.cardBackground }]}>
+                <Ionicons name="sunny-outline" size={24} color={colors.text} />
+                <Text style={[styles.monitoringLabel, { color: colors.text }]}>Intensity</Text>
                 <View style={styles.valueContainer}>
                   {envData.loading ? (
-                    <ActivityIndicator size="small" color="#666" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <>
-                      <Text style={styles.valueText}>{envData.intensity}</Text>
-                      <Text style={styles.unitText}>Cd</Text>
+                      <Text style={[styles.valueText, { color: colors.text }]}>{envData.intensity}</Text>
+                      <Text style={[styles.unitText, { color: colors.placeholder }]}>Cd</Text>
                     </>
                   )}
                 </View>
@@ -332,31 +391,31 @@ export default function HomeScreen() {
 
             {/* Row 2 */}
             <View style={styles.monitoringRow}>
-              <View style={styles.monitoringCard}>
-                <Ionicons name="water-outline" size={24} color="black" />
-                <Text style={styles.monitoringLabel}>Humidity</Text>
+              <View style={[styles.monitoringCard, { backgroundColor: colors.cardBackground }]}>
+                <Ionicons name="water-outline" size={24} color={colors.text} />
+                <Text style={[styles.monitoringLabel, { color: colors.text }]}>Humidity</Text>
                 <View style={styles.valueContainer}>
                   {envData.loading ? (
-                    <ActivityIndicator size="small" color="#666" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <>
-                      <Text style={styles.valueText}>{envData.humidity}</Text>
-                      <Text style={styles.unitText}>%</Text>
+                      <Text style={[styles.valueText, { color: colors.text }]}>{envData.humidity}</Text>
+                      <Text style={[styles.unitText, { color: colors.placeholder }]}>%</Text>
                     </>
                   )}
                 </View>
               </View>
 
-              <View style={styles.monitoringCard}>
-                <Ionicons name="flask-outline" size={24} color="black" />
-                <Text style={styles.monitoringLabel}>Water PH</Text>
+              <View style={[styles.monitoringCard, { backgroundColor: colors.cardBackground }]}>
+                <Ionicons name="flask-outline" size={24} color={colors.text} />
+                <Text style={[styles.monitoringLabel, { color: colors.text }]}>Water PH</Text>
                 <View style={styles.valueContainer}>
                   {envData.loading ? (
-                    <ActivityIndicator size="small" color="#666" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <>
-                      <Text style={styles.valueText}>{envData.pH}</Text>
-                      <Text style={styles.unitText}>pH</Text>
+                      <Text style={[styles.valueText, { color: colors.text }]}>{envData.pH}</Text>
+                      <Text style={[styles.unitText, { color: colors.placeholder }]}>pH</Text>
                     </>
                   )}
                 </View>
@@ -366,28 +425,34 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
       {/* Bottom Tab Bar */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { backgroundColor: colors.tabBarBackground }]}>
         <TouchableOpacity style={styles.tabItem} onPress={() => {}}>
-          <Ionicons name="home" size={24} color="white" />
-          <Text style={styles.tabLabel}>Home</Text>
+          <Ionicons name="home" size={24} color={colors.tabBarText} />
+          <Text style={[styles.tabLabel, { color: colors.tabBarText }]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.tabItem}
           onPress={() => router.push("/lessons")}
         >
-          <Ionicons name="information-circle-outline" size={24} color="white" />
-          <Text style={styles.tabLabel}>Lessons</Text>
+          <Ionicons name="information-circle-outline" size={24} color={colors.tabBarText} />
+          <Text style={[styles.tabLabel, { color: colors.tabBarText }]}>Lessons</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.tabItem}
           onPress={() => router.push("/profile")}
         >
-          <Ionicons name="person-outline" size={24} color="white" />
-          <Text style={styles.tabLabel}>User</Text>
+          <Ionicons name="person-outline" size={24} color={colors.tabBarText} />
+          <Text style={[styles.tabLabel, { color: colors.tabBarText }]}>User</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Notification Panel */}
+      <NotificationComponent 
+        isVisible={showNotificationPanel} 
+        onClose={() => setShowNotificationPanel(false)} 
+      />
     </SafeAreaView>
   );
 }
@@ -395,7 +460,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -405,7 +469,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   headerLeft: {
     flex: 1,
@@ -416,6 +479,22 @@ const styles = StyleSheet.create({
   },
   notificationIcon: {
     padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    backgroundColor: '#FF4500',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   welcomeContainer: {
     flexDirection: "row",
@@ -429,12 +508,10 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#1a237e",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
     borderRadius: 20,
     marginHorizontal: 16,
     paddingHorizontal: 16,
@@ -447,7 +524,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: "#333",
   },
   contentContainer: {
     flex: 1,
@@ -461,7 +537,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   featureCard: {
-    backgroundColor: "#f5f5f5",
     borderRadius: 16,
     padding: 16,
     alignItems: "flex-start",
@@ -486,7 +561,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   monitoringCard: {
-    backgroundColor: "#f5f5f5",
     borderRadius: 16,
     padding: 16,
     width: "48%",
@@ -511,11 +585,9 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: 16,
     marginLeft: 4,
-    color: "#666",
   },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#6da77f",
     paddingBottom: Platform.OS === "ios" ? 24 : 16,
     paddingTop: 12,
     justifyContent: "space-around",
@@ -537,6 +609,5 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     marginTop: 4,
-    color: "white",
   },
 });
