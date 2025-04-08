@@ -3,8 +3,9 @@ import { View, ActivityIndicator } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Slot } from 'expo-router';
+import { ThemeProvider } from '../app/ThemeContext';
+import { NotificationProvider } from '../app/NotificationContext';
 
-// Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
@@ -24,8 +25,12 @@ export default function Layout() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <Slot /> {/* Renders the current screen */}
-    </View>
+    <ThemeProvider>
+      <NotificationProvider>
+        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <Slot /> {/* Renders the current screen */}
+        </View>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }

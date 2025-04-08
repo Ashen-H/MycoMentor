@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useTheme } from "../app/ThemeContext"; // Import the theme hook
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
-
 
 const LESSONS = [
   {
@@ -30,10 +30,10 @@ const LESSONS = [
 Fungi consist of thread-like structures called mycelium that grow underground or within their food source. When conditions are right, the mycelium produces fruiting bodies called mushrooms, which release spores for reproduction.
 
 Key characteristics of mushrooms:
-• They are decomposers that break down dead organic matter
-• They reproduce through spores rather than seeds
-• They have cell walls made of chitin (similar to insect exoskeletons) rather than cellulose
-• They obtain nutrients by absorption rather than photosynthesis
+- They are decomposers that break down dead organic matter
+- They reproduce through spores rather than seeds
+- They have cell walls made of chitin (similar to insect exoskeletons) rather than cellulose
+- They obtain nutrients by absorption rather than photosynthesis
 
 Mushrooms play critical roles in ecosystems as decomposers, helping to recycle nutrients in the environment.`,
       },
@@ -93,10 +93,10 @@ Different mushroom species may have variations or completely different structure
 
 Substrate Selection:
 Different mushrooms prefer different growing media. Common substrates include:
-• Straw: Used for oyster mushrooms
-• Sawdust: Ideal for shiitake and lion's mane
-• Compost: Used for button mushrooms
-• Logs: Natural substrate for shiitake and other wood-loving species
+- Straw: Used for oyster mushrooms
+- Sawdust: Ideal for shiitake and lion's mane
+- Compost: Used for button mushrooms
+- Logs: Natural substrate for shiitake and other wood-loving species
 
 Preparation Steps:
 1. Chopping: Cut substrate materials into small pieces to increase surface area.
@@ -155,24 +155,24 @@ Each mushroom species has specific requirements, so adjust conditions according 
         content: `Even experienced growers encounter problems. Here are common issues and solutions:
 
 Contamination:
-• Green mold (Trichoderma): Often appears as green patches. Prevention: proper sterilization, clean techniques.
-• Black mold: Various dark-colored molds. Solution: improve air circulation, maintain proper humidity.
-• Bacteria: Often appears slimy or smells bad. Prevention: proper substrate preparation and moisture management.
+- Green mold (Trichoderma): Often appears as green patches. Prevention: proper sterilization, clean techniques.
+- Black mold: Various dark-colored molds. Solution: improve air circulation, maintain proper humidity.
+- Bacteria: Often appears slimy or smells bad. Prevention: proper substrate preparation and moisture management.
 
 Growth Issues:
-• Slow colonization: Usually caused by low temperatures or old spawn. Solution: increase temperature, use fresh spawn.
-• Overlay: Mycelium becomes thick and doesn't fruit. Solution: lower temperature, increase FAE (Fresh Air Exchange).
-• Leggy/stemmy mushrooms: Caused by inadequate fresh air. Solution: increase ventilation.
+- Slow colonization: Usually caused by low temperatures or old spawn. Solution: increase temperature, use fresh spawn.
+- Overlay: Mycelium becomes thick and doesn't fruit. Solution: lower temperature, increase FAE (Fresh Air Exchange).
+- Leggy/stemmy mushrooms: Caused by inadequate fresh air. Solution: increase ventilation.
 
 Fruiting Problems:
-• No fruiting: Check for improper temperatures, lack of light, or missing cold shock.
-• Aborted pins: Often caused by fluctuating humidity or temperature. Maintain stable conditions.
-• Small yields: Usually nutrition or moisture related. Ensure proper substrate formulation and hydration.
+- No fruiting: Check for improper temperatures, lack of light, or missing cold shock.
+- Aborted pins: Often caused by fluctuating humidity or temperature. Maintain stable conditions.
+- Small yields: Usually nutrition or moisture related. Ensure proper substrate formulation and hydration.
 
 Environmental Issues:
-• Low humidity: Use humidifiers or misting systems to increase humidity.
-• Too much moisture: Causes bacterial contamination. Improve air circulation.
-• Poor ventilation: Results in high CO₂ levels. Increase fresh air exchange.
+- Low humidity: Use humidifiers or misting systems to increase humidity.
+- Too much moisture: Causes bacterial contamination. Improve air circulation.
+- Poor ventilation: Results in high CO₂ levels. Increase fresh air exchange.
 
 Regular monitoring and timely adjustments will help prevent many of these common problems.`,
       },
@@ -191,39 +191,39 @@ Regular monitoring and timely adjustments will help prevent many of these common
         content: `Popular edible mushrooms for cultivation and consumption:
 
 Button/White Mushroom (Agaricus bisporus):
-• Most commonly consumed mushroom worldwide
-• Mild flavor that intensifies when cooked
-• Cultivated on composted substrate
-• Same species as cremini and portobello (different growth stages)
+- Most commonly consumed mushroom worldwide
+- Mild flavor that intensifies when cooked
+- Cultivated on composted substrate
+- Same species as cremini and portobello (different growth stages)
 
 Shiitake (Lentinula edodes):
-• Rich, umami flavor with meaty texture
-• Traditionally grown on hardwood logs
-• Also cultivated on supplemented sawdust blocks
-• Contains lentinan, which has potential health benefits
+- Rich, umami flavor with meaty texture
+- Traditionally grown on hardwood logs
+- Also cultivated on supplemented sawdust blocks
+- Contains lentinan, which has potential health benefits
 
 Oyster Mushroom (Pleurotus species):
-• Fast-growing and beginner-friendly
-• Delicate flavor with velvety texture
-• Comes in various colors (gray, pink, yellow, blue)
-• Can grow on many substrates including straw and coffee grounds
+- Fast-growing and beginner-friendly
+- Delicate flavor with velvety texture
+- Comes in various colors (gray, pink, yellow, blue)
+- Can grow on many substrates including straw and coffee grounds
 
 King Oyster (Pleurotus eryngii):
-• Thick, meaty stem with mild flavor
-• Popular meat substitute in vegetarian dishes
-• Requires more specific growing conditions than regular oysters
+- Thick, meaty stem with mild flavor
+- Popular meat substitute in vegetarian dishes
+- Requires more specific growing conditions than regular oysters
 
 Lion's Mane (Hericium erinaceus):
-• Unique appearance with tooth-like structures
-• Seafood-like flavor reminiscent of crab or lobster
-• Growing in popularity due to potential cognitive health benefits
-• Grows on hardwood substrates
+- Unique appearance with tooth-like structures
+- Seafood-like flavor reminiscent of crab or lobster
+- Growing in popularity due to potential cognitive health benefits
+- Grows on hardwood substrates
 
 Enoki (Flammulina velutipes):
-• Long, thin stems with small caps
-• Crisp texture and mild flavor
-• Commercially grown in bottles with limited light to achieve long stems
-• Popular in East Asian cuisine
+- Long, thin stems with small caps
+- Crisp texture and mild flavor
+- Commercially grown in bottles with limited light to achieve long stems
+- Popular in East Asian cuisine
 
 Each variety requires slightly different growing conditions and culinary applications, making mushroom cultivation an exciting and diverse hobby.`,
       },
@@ -234,40 +234,40 @@ Each variety requires slightly different growing conditions and culinary applica
         content: `Mushrooms with traditionally recognized or scientifically studied health benefits:
 
 Reishi (Ganoderma lucidum):
-• Known as the "mushroom of immortality" in traditional Chinese medicine
-• Contains triterpenes and beta-glucans
-• Used to support immune function and stress response
-• Typically prepared as a tea or tincture rather than eaten whole
+- Known as the "mushroom of immortality" in traditional Chinese medicine
+- Contains triterpenes and beta-glucans
+- Used to support immune function and stress response
+- Typically prepared as a tea or tincture rather than eaten whole
 
 Turkey Tail (Trametes versicolor):
-• Contains polysaccharide-K (PSK) and polysaccharide peptide (PSP)
-• Used in Japan alongside conventional cancer treatments
-• Striking multicolored appearance resembling turkey feathers
-• Grows on dead wood and stumps
+- Contains polysaccharide-K (PSK) and polysaccharide peptide (PSP)
+- Used in Japan alongside conventional cancer treatments
+- Striking multicolored appearance resembling turkey feathers
+- Grows on dead wood and stumps
 
 Chaga (Inonotus obliquus):
-• Grows primarily on birch trees in cold climates
-• High in antioxidants and melanin
-• Traditionally used in Russian and Northern European folk medicine
-• Prepared as a tea or extract
+- Grows primarily on birch trees in cold climates
+- High in antioxidants and melanin
+- Traditionally used in Russian and Northern European folk medicine
+- Prepared as a tea or extract
 
 Cordyceps (Cordyceps militaris, Cordyceps sinensis):
-• Known for potential benefits for energy and stamina
-• Contains cordycepin and other bioactive compounds
-• Wild C. sinensis is extremely rare and expensive
-• C. militaris is more commonly cultivated
+- Known for potential benefits for energy and stamina
+- Contains cordycepin and other bioactive compounds
+- Wild C. sinensis is extremely rare and expensive
+- C. militaris is more commonly cultivated
 
 Lion's Mane (Hericium erinaceus):
-• Contains compounds that may support nerve growth factor (NGF)
-• Studied for potential cognitive and neurological benefits
-• Dual-purpose mushroom: both medicinal and culinary
-• Distinctive appearance with cascading "teeth" instead of gills
+- Contains compounds that may support nerve growth factor (NGF)
+- Studied for potential cognitive and neurological benefits
+- Dual-purpose mushroom: both medicinal and culinary
+- Distinctive appearance with cascading "teeth" instead of gills
 
 Maitake (Grifola frondosa):
-• Known as "hen of the woods" due to its appearance
-• Contains beta-glucans that may support immune function
-• Delicious culinary mushroom with potential health benefits
-• Grows at the base of oak trees
+- Known as "hen of the woods" due to its appearance
+- Contains beta-glucans that may support immune function
+- Delicious culinary mushroom with potential health benefits
+- Grows at the base of oak trees
 
 Research on medicinal mushrooms is ongoing, and while traditional uses are well-documented, scientific confirmation of all purported benefits is still developing.`,
       },
@@ -278,31 +278,31 @@ Research on medicinal mushrooms is ongoing, and while traditional uses are well-
         content: `Important safety information about wild mushroom identification:
 
 Golden Rules of Foraging:
-• Never eat any mushroom you cannot identify with 100% certainty
-• Learn from experts through hands-on field experiences
-• Always use multiple identification features, not just one characteristic
-• When in doubt, throw it out
-• Start with easily identifiable species with few dangerous look-alikes
+- Never eat any mushroom you cannot identify with 100% certainty
+- Learn from experts through hands-on field experiences
+- Always use multiple identification features, not just one characteristic
+- When in doubt, throw it out
+- Start with easily identifiable species with few dangerous look-alikes
 
 Identification Features:
-• Cap: Shape, color, texture, and size
-• Gills/Pores: Arrangement, color, attachment to stem
-• Stem: Presence of a ring or volva, texture, color
-• Spore Print: Color of spores when deposited on paper
-• Habitat: Where it grows (wood, grass, etc.)
-• Smell and taste (only taste and spit out - never swallow unknowns)
+- Cap: Shape, color, texture, and size
+- Gills/Pores: Arrangement, color, attachment to stem
+- Stem: Presence of a ring or volva, texture, color
+- Spore Print: Color of spores when deposited on paper
+- Habitat: Where it grows (wood, grass, etc.)
+- Smell and taste (only taste and spit out - never swallow unknowns)
 
 Dangerous Look-alikes:
-• Death Cap (Amanita phalloides): Resembles some edible mushrooms but contains deadly amatoxins
-• False Morels: Can be confused with true morels but contain gyromitrin toxins
-• Jack O'Lantern: Orange glow can be mistaken for edible Chanterelles
-• Little Brown Mushrooms (LBMs): Many small brown mushrooms look similar but include deadly species
+- Death Cap (Amanita phalloides): Resembles some edible mushrooms but contains deadly amatoxins
+- False Morels: Can be confused with true morels but contain gyromitrin toxins
+- Jack O'Lantern: Orange glow can be mistaken for edible Chanterelles
+- Little Brown Mushrooms (LBMs): Many small brown mushrooms look similar but include deadly species
 
 Resources for Identification:
-• Join local mycological societies
-• Use multiple field guides specific to your region
-• Consider apps as supplementary tools only, never as definitive identification
-• Have identifications confirmed by experts
+- Join local mycological societies
+- Use multiple field guides specific to your region
+- Consider apps as supplementary tools only, never as definitive identification
+- Have identifications confirmed by experts
 
 Never rely on single identification methods or shortcuts. Proper identification requires careful observation of multiple characteristics and experience.`,
       },
@@ -321,31 +321,31 @@ Never rely on single identification methods or shortcuts. Proper identification 
         content: `Mushroom cultivation can be one of the most sustainable forms of food production:
 
 Waste Stream Utilization:
-• Agricultural waste: Straw, corn cobs, coffee grounds
-• Forestry byproducts: Sawdust, wood chips, paper waste
-• Food processing waste: Spent brewery grains, cottonseed hulls
+- Agricultural waste: Straw, corn cobs, coffee grounds
+- Forestry byproducts: Sawdust, wood chips, paper waste
+- Food processing waste: Spent brewery grains, cottonseed hulls
 By using these waste materials as substrates, mushroom cultivation helps divert waste from landfills.
 
 Resource Efficiency:
-• Water usage: Mushrooms require significantly less water than most vegetables
-• Space efficiency: Can be grown vertically with high yields per square foot
-• Energy: Many species can be grown at room temperature without special lighting
-• Time: Fast growth cycle compared to many other crops (weeks vs. months)
+- Water usage: Mushrooms require significantly less water than most vegetables
+- Space efficiency: Can be grown vertically with high yields per square foot
+- Energy: Many species can be grown at room temperature without special lighting
+- Time: Fast growth cycle compared to many other crops (weeks vs. months)
 
 Closed-Loop Systems:
-• Spent mushroom substrate makes excellent compost
-• Can be used as a soil amendment or worm food
-• Supports garden vegetable production creating a circular system
+- Spent mushroom substrate makes excellent compost
+- Can be used as a soil amendment or worm food
+- Supports garden vegetable production creating a circular system
 
 Carbon Footprint:
-• Low carbon footprint compared to animal proteins
-• Local production reduces transportation emissions
-• Potential to recycle carbon from waste materials
+- Low carbon footprint compared to animal proteins
+- Local production reduces transportation emissions
+- Potential to recycle carbon from waste materials
 
 Regenerative Applications:
-• Mycoremediation: Using fungi to clean contaminated soils
-• Mycopesticides: Fungi as natural pest control
-• Mycomaterials: Using mycelium to create sustainable packaging and building materials
+- Mycoremediation: Using fungi to clean contaminated soils
+- Mycopesticides: Fungi as natural pest control
+- Mycomaterials: Using mycelium to create sustainable packaging and building materials
 
 When designing your cultivation setup, consider how you can incorporate these sustainable practices to minimize environmental impact while maximizing production.`,
       },
@@ -356,33 +356,33 @@ When designing your cultivation setup, consider how you can incorporate these su
         content: `Beyond food production, mushroom mycelium has exciting applications as a sustainable material:
 
 Packaging Materials:
-• Companies now produce protective packaging from mycelium bound to agricultural waste
-• Fully home-compostable alternative to styrofoam
-• Custom moldable to any shape
-• Naturally fire-resistant without chemical additives
+- Companies now produce protective packaging from mycelium bound to agricultural waste
+- Fully home-compostable alternative to styrofoam
+- Custom moldable to any shape
+- Naturally fire-resistant without chemical additives
 
 Construction & Design:
-• Acoustic panels and insulation
-• Lightweight bricks and building materials
-• Furniture and interior design elements
-• Naturally water-resistant when properly treated
+- Acoustic panels and insulation
+- Lightweight bricks and building materials
+- Furniture and interior design elements
+- Naturally water-resistant when properly treated
 
 Textiles & Leather Alternatives:
-• Mycelium-based leather substitutes
-• Potential for clothing and accessories
-• Biodegradable alternative to petroleum-based synthetics
+- Mycelium-based leather substitutes
+- Potential for clothing and accessories
+- Biodegradable alternative to petroleum-based synthetics
 
 Benefits over Traditional Materials:
-• Renewable resource grown in weeks rather than years
-• Compostable at end of life
-• Carbon-sequestering during production
-• Minimal energy requirements for production
-• Can utilize local agricultural waste
+- Renewable resource grown in weeks rather than years
+- Compostable at end of life
+- Carbon-sequestering during production
+- Minimal energy requirements for production
+- Can utilize local agricultural waste
 
 DIY Applications:
-• Small-scale mycelium material experiments can be done at home
-• Requires similar cultivation techniques as growing mushrooms
-• Special strains selected for strength rather than fruiting capacity
+- Small-scale mycelium material experiments can be done at home
+- Requires similar cultivation techniques as growing mushrooms
+- Special strains selected for strength rather than fruiting capacity
 
 This emerging field of "mycomaterials" represents a promising intersection of biology and materials science with significant potential for sustainable innovation.`,
       },
@@ -394,31 +394,31 @@ This emerging field of "mycomaterials" represents a promising intersection of bi
 
 How It Works:
 Fungi produce powerful enzymes that can break down complex compounds:
-• Lignin-degrading enzymes break down wood and similar chemicals
-• These same enzymes can break down petroleum products, pesticides, and more
-• Different mushroom species target different contaminants
+- Lignin-degrading enzymes break down wood and similar chemicals
+- These same enzymes can break down petroleum products, pesticides, and more
+- Different mushroom species target different contaminants
 
 Key Applications:
-• Soil Remediation: Cleaning soil contaminated with oils, pesticides, or industrial chemicals
-• Water Filtration: Mycelium can filter pathogens and chemicals from water
-• Agricultural Runoff: Processing excess nutrients and agricultural chemicals
-• Disaster Response: Oil spill cleanup and toxic waste management
+- Soil Remediation: Cleaning soil contaminated with oils, pesticides, or industrial chemicals
+- Water Filtration: Mycelium can filter pathogens and chemicals from water
+- Agricultural Runoff: Processing excess nutrients and agricultural chemicals
+- Disaster Response: Oil spill cleanup and toxic waste management
 
 Effective Mushroom Species:
-• Oyster mushrooms (Pleurotus): Petroleum products, PAHs
-• Turkey Tail (Trametes versicolor): Various toxins and some heavy metals
-• Garden Giant (Stropharia rugosoannulata): E. coli and agricultural runoff
-• King Stropharia: Garden and agricultural applications
+- Oyster mushrooms (Pleurotus): Petroleum products, PAHs
+- Turkey Tail (Trametes versicolor): Various toxins and some heavy metals
+- Garden Giant (Stropharia rugosoannulata): E. coli and agricultural runoff
+- King Stropharia: Garden and agricultural applications
 
 Implementation Methods:
-• Mycofiltration: Using mycelium as a filter for water
-• Soil application: Mixing spawn with contaminated soil
-• Mycobooms: Straw rafts colonized with mycelium to capture contaminants
+- Mycofiltration: Using mycelium as a filter for water
+- Soil application: Mixing spawn with contaminated soil
+- Mycobooms: Straw rafts colonized with mycelium to capture contaminants
 
 Limitations:
-• Not effective for all types of contamination
-• Results can vary based on conditions
-• Some toxins may concentrate in the fruiting bodies
+- Not effective for all types of contamination
+- Results can vary based on conditions
+- Some toxins may concentrate in the fruiting bodies
 
 This emerging field combines ecological restoration with mushroom cultivation techniques, offering sustainable solutions to environmental challenges.`,
       },
@@ -427,6 +427,9 @@ This emerging field combines ecological restoration with mushroom cultivation te
 ];
 
 export default function LessonsScreen() {
+  // Get theme context
+  const { colors, isDark } = useTheme();
+  
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
 
@@ -445,7 +448,13 @@ export default function LessonsScreen() {
       {LESSONS.map((category) => (
         <TouchableOpacity
           key={category.id}
-          style={[styles.categoryCard, { borderLeftColor: category.color }]}
+          style={[
+            styles.categoryCard, 
+            { 
+              borderLeftColor: category.color,
+              backgroundColor: colors.cardBackground 
+            }
+          ]}
           onPress={() => setSelectedCategory(category.id)}
         >
           <View
@@ -457,12 +466,14 @@ export default function LessonsScreen() {
             <Ionicons name={category.icon} size={24} color="white" />
           </View>
           <View style={styles.categoryTextContainer}>
-            <Text style={styles.categoryTitle}>{category.title}</Text>
-            <Text style={styles.categorySubtitle}>
+            <Text style={[styles.categoryTitle, { color: colors.text }]}>
+              {category.title}
+            </Text>
+            <Text style={[styles.categorySubtitle, { color: colors.placeholder }]}>
               {category.lessons.length} lessons
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
+          <Ionicons name="chevron-forward" size={24} color={colors.placeholder} />
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -485,17 +496,21 @@ export default function LessonsScreen() {
           {category.lessons.map((lesson) => (
             <TouchableOpacity
               key={lesson.id}
-              style={styles.lessonCard}
+              style={[styles.lessonCard, { backgroundColor: colors.cardBackground }]}
               onPress={() => setSelectedLesson(lesson)}
             >
               <View style={styles.lessonInfo}>
-                <Text style={styles.lessonTitle}>{lesson.title}</Text>
+                <Text style={[styles.lessonTitle, { color: colors.text }]}>
+                  {lesson.title}
+                </Text>
                 <View style={styles.lessonMeta}>
-                  <Ionicons name="time-outline" size={14} color="#666" />
-                  <Text style={styles.lessonDuration}>{lesson.duration}</Text>
+                  <Ionicons name="time-outline" size={14} color={colors.placeholder} />
+                  <Text style={[styles.lessonDuration, { color: colors.placeholder }]}>
+                    {lesson.duration}
+                  </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#6da77f" />
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -509,39 +524,42 @@ export default function LessonsScreen() {
     return (
       <View style={styles.lessonContentContainer}>
         <ScrollView style={styles.lessonContent}>
-          <Text style={styles.lessonContentTitle}>{selectedLesson.title}</Text>
+          <Text style={[styles.lessonContentTitle, { color: colors.text }]}>
+            {selectedLesson.title}
+          </Text>
 
           <View style={styles.lessonMetaDetail}>
             <View style={styles.lessonMetaItem}>
-              <Ionicons name="time-outline" size={16} color="#666" />
-              <Text style={styles.lessonMetaText}>
+              <Ionicons name="time-outline" size={16} color={colors.placeholder} />
+              <Text style={[styles.lessonMetaText, { color: colors.placeholder }]}>
                 {selectedLesson.duration}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.lessonContentText}>{selectedLesson.content}</Text>
+          <Text style={[styles.lessonContentText, { color: colors.text }]}>
+            {selectedLesson.content}
+          </Text>
         </ScrollView>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-        {/* Background Mushroom Image */}
-    <Image
-      source={require("../assets/images/mushroom-img.png")}
-      style={styles.mushroomBackground}
-      resizeMode="contain"
-    />
-      {/* Header */}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Background Mushroom Image */}
+      <Image
+        source={require("../assets/images/mushroom-img.png")}
+        style={styles.mushroomBackground}
+        resizeMode="contain"
+      />
       
-      <View style={styles.header}>
-       
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           {selectedLesson
             ? selectedLesson.title
             : selectedCategory !== null
@@ -570,7 +588,6 @@ const styles = StyleSheet.create({
     top: 550,
     zIndex: 0,
     right: 0,
-
   },
   header: {
     flexDirection: "row",

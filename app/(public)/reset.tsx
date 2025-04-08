@@ -1,5 +1,4 @@
 import { colors } from "@/constants/colors";
-import { useSignIn } from "@clerk/clerk-expo";
 import React, { useState } from "react";
 import { Stack } from "expo-router";
 import {
@@ -8,49 +7,109 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
+  Alert,
 } from "react-native";
 import Spinner from "react-native-loading-spinner-overlay";
+import axios from "axios";
 
 const color = colors;
 
-const PwReset = () => {
+// Update with your backend URL
+// If testing on physical device, use your computer's IP instead of localhost
+// Example: const API_URL = "http://192.168.1.5:5001/api/password";
+const API_URL = "http://10.0.2.2:5001/api/password"; // For Android Emulator
+
+const ForgotPassword = () => {
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [successfulCreation, setSuccessfulCreation] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, setActive } = useSignIn();
 
-  const onRequestReset = async () => {
+  // Test connection to backend
+  const testConnection = async () => {
     setLoading(true);
     try {
-      await signIn?.create({
-        strategy: "reset_password_email_code",
-        identifier: emailAddress,
-      });
-      setSuccessfulCreation(true);
+      // Test a simple endpoint first
+      const response = await axios.get("http://10.0.2.2:5001/api/test");
+      Alert.alert("Connection Success", JSON.stringify(response.data));
     } catch (err: any) {
-      alert(err.errors[0].message);
+      console.error("Connection test error:", err);
+      Alert.alert(
+        "Connection Error",
+        `Error: ${err.message}\n\nMake sure your backend server is running and accessible.`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRequestReset = async () => {
+    if (!emailAddress) {
+      Alert.alert("Error", "Please enter your email address");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log("Sending request to:", `${API_URL}/request-reset`);
+      const response = await axios.post(`${API_URL}/request-reset`, {
+        email: emailAddress,
+      });
+      
+      console.log("Response:", response.data);
+      setSuccessfulCreation(true);
+      Alert.alert("Success", "Reset code sent to your email");
+    } catch (err: any) {
+      console.error("Request reset error:", err);
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Response data:", err.response.data);
+        console.error("Response status:", err.response.status);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error("No response received");
+      }
+      
+      Alert.alert(
+        "Error", 
+        err.response?.data?.error || `Network error: ${err.message}`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const onReset = async () => {
+    if (!code || !password) {
+      Alert.alert("Error", "Please enter both code and new password");
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await signIn?.attemptFirstFactor({
-        strategy: "reset_password_email_code",
-        code,
-        password,
+      const response = await axios.post(`${API_URL}/reset`, {
+        email: emailAddress,
+        code: code,
+        newPassword: password,
       });
-      alert("Password reset successfully");
-
-      if (setActive) {
-        await setActive({ session: result?.createdSessionId });
-      }
+      
+      Alert.alert("Success", "Password reset successfully", [
+        { 
+          text: "OK", 
+          onPress: () => {
+            // Navigate to login screen
+            // You'll need to implement this navigation based on your app structure
+          } 
+        }
+      ]);
     } catch (err: any) {
-      alert(err.errors[0].message);
+      console.error(err);
+      Alert.alert(
+        "Error", 
+        err.response?.data?.error || "Failed to reset password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,27 +122,44 @@ const PwReset = () => {
 
       {!successfulCreation ? (
         <>
+          <Text style={styles.headerText}>Reset Password</Text>
+          <Text style={styles.instructionText}>
+            Enter your email address and we'll send you a code to reset your password
+          </Text>
           <TextInput
             autoCapitalize="none"
             placeholder="yourname@mail.com"
             value={emailAddress}
             onChangeText={setEmailAddress}
             style={styles.inputField}
+            keyboardType="email-address"
           />
           <TouchableOpacity
             style={[styles.button, { backgroundColor: color.accent_high }]}
             onPress={onRequestReset}
           >
-            <Text style={styles.buttonText}>Send Reset Email</Text>
+            <Text style={styles.buttonText}>Send Reset Code</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#666", marginTop: 20 }]}
+            onPress={testConnection}
+          >
+            <Text style={styles.buttonText}>Test Backend Connection</Text>
           </TouchableOpacity>
         </>
       ) : (
         <>
+          <Text style={styles.headerText}>Enter Reset Code</Text>
+          <Text style={styles.instructionText}>
+            We've sent a code to {emailAddress}. Enter it below along with your new password.
+          </Text>
           <TextInput
             value={code}
-            placeholder="Code..."
+            placeholder="Reset code"
             onChangeText={setCode}
             style={styles.inputField}
+            keyboardType="number-pad"
           />
           <TextInput
             placeholder="New password"
@@ -96,7 +172,7 @@ const PwReset = () => {
             style={[styles.button, { backgroundColor: color.accent_high }]}
             onPress={onReset}
           >
-            <Text style={styles.buttonText}>Set new Password</Text>
+            <Text style={styles.buttonText}>Set New Password</Text>
           </TouchableOpacity>
         </>
       )}
@@ -111,12 +187,24 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: color.primary,
   },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  instructionText: {
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#666",
+  },
   inputField: {
     backgroundColor: "white",
-    padding: 10,
+    padding: 12,
     borderWidth: 1,
     borderStyle: "dashed",
-    marginVertical: 5,
+    marginVertical: 8,
     borderRadius: 30,
   },
   button: {
@@ -132,4 +220,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PwReset;
+export default ForgotPassword;
