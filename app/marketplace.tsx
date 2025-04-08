@@ -34,7 +34,7 @@ interface Listing {
   contactEmail?: string;
   location: {
     type: string;
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: [number, number]; 
   };
   images: string[];
   createdAt: string;
@@ -62,6 +62,7 @@ export default function MarketplaceScreen() {
     longitudeDelta: 0.1,
   });
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
+  
 
   // Get user location and fetch listings
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function MarketplaceScreen() {
           
           // Using the nearby endpoint to get listings within 20km of the user
           const response = await axios.get(
-            `http://192.168.1.200:5001/api/marketplace/nearby/20?latitude=${latitude}&longitude=${longitude}`,
+            `http://20.212.249.149:5000/api/marketplace/nearby/20?latitude=${latitude}&longitude=${longitude}`,
             {
               headers: {
                 'x-auth-token': token
@@ -116,7 +117,7 @@ export default function MarketplaceScreen() {
         try {
           const token = await SecureStore.getItemAsync('userToken');
           if (token) {
-            const response = await axios.get('http://192.168.1.200:5001/api/marketplace', {
+            const response = await axios.get('http://20.212.249.149:5000/api/marketplace', {
               headers: {
                 'x-auth-token': token
               }

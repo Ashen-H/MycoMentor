@@ -214,7 +214,7 @@ export default function HomeScreen() {
       }
     };
 
-    //fetchEnvironmentalData();
+    fetchEnvironmentalData();
 
     const intervalId = setInterval(fetchEnvironmentalData, 15 * 60 * 1000);
 

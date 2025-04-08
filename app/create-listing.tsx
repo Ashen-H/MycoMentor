@@ -94,7 +94,7 @@ export default function CreateListingScreen() {
           return;
         }
         
-        const response = await axios.get('http://192.168.1.200:5001/api/auth/me', {
+        const response = await axios.get('http://20.212.249.149:5000/api/auth/me', {
           headers: {
             'x-auth-token': token
           }
@@ -217,7 +217,7 @@ export default function CreateListingScreen() {
         });
         
         const imageUploadResponse = await axios.post(
-          'http://192.168.1.200:5001/api/upload',
+          'http://20.212.249.149:5000/api/upload',
           formData,
           {
             headers: {
@@ -249,7 +249,7 @@ export default function CreateListingScreen() {
       };
       
       const response = await axios.post(
-        'http://192.168.1.200:5001/api/marketplace',
+        'http://20.212.249.149:5000/api/marketplace',
         listingData,
         {
           headers: {
