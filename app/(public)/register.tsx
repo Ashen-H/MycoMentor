@@ -126,7 +126,7 @@ export default function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      const apiUrl = `${API_BASE_URL}/api/auth/register`;
+      const apiUrl = `http://20.212.249.149:5000/api/auth/register`;
       console.log("Sending registration request to:", apiUrl);
 
       const requestBody = {

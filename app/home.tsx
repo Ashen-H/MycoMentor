@@ -223,7 +223,6 @@ export default function HomeScreen() {
 
   const fetchUserData = async () => {
     try {
-      router.replace("/(public)/login");
       // Get the authentication token
       const token = await SecureStore.getItemAsync("userToken");
 

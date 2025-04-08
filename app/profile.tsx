@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { useTheme } from "../app/ThemeContext"; // Import the theme hook
 
-const API_URL = "http://172.20.10.2:5001/api";
+const API_URL = "http://20.212.249.149:5000/api";
 
 export default function ProfileScreen() {
   // Get theme context

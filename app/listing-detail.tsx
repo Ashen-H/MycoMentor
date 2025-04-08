@@ -63,11 +63,11 @@ export default function ListingDetailScreen() {
           return;
         }
         
-        const response = await axios.get(`http://192.168.1.200:5001/api/marketplace/${listingId}`, {
+        const response = await axios.get(`http://20.212.249.149:5000/api/marketplace/${listingId}`, {
           headers: {
             'x-auth-token': token
           }
-        });
+        }); 
         
         setListing(response.data);
       } catch (error) {
