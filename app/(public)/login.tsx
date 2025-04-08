@@ -66,38 +66,38 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    // if (!validateInputs()) {
-    //   return;
-    // }
+    if (!validateInputs()) {
+      return;
+    }
 
-    // setIsLoading(true);
+    setIsLoading(true);
 
     try {
-      // const apiUrl = 'http://172.20.10.2:5001/api/auth/login';
+      const apiUrl = "http://20.212.249.149:5000/api/auth/login";
 
-      // const response = await fetch(apiUrl, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     email,
-      //     password,
-      //   }),
-      // });
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-      // const data = await response.json();
+      const data = await response.json();
 
-      // if (!response.ok) {
-      //   throw new Error(data.error || 'Login failed');
-      // }
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
 
-      // await SecureStore.deleteItemAsync('justLoggedOut');
+      await SecureStore.deleteItemAsync("justLoggedOut");
 
-      // await SecureStore.setItemAsync('userToken', data.token);
+      await SecureStore.setItemAsync("userToken", data.token);
 
-      // setEmail("");
-      // setPassword("");
+      setEmail("");
+      setPassword("");
 
       router.push("/home");
     } catch (error) {
@@ -220,6 +220,7 @@ export default function LoginScreen() {
                       isLoading && styles.disabledButton,
                     ]}
                     onPress={handleLogin}
+                    // onPress={() => router.push("/home")}
                     disabled={isLoading}
                   >
                     {isLoading ? (

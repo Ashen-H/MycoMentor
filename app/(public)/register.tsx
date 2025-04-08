@@ -19,10 +19,11 @@ import { router, Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 
-
-const API_BASE_URL = __DEV__ 
-  ? 'http://172.20.10.2:5001' 
-  : 'https://your-production-backend.com';
+export const API_BASE_URL =
+  // __DEV__
+  //   ? "http://172.20.10.2:5001"
+  //   :
+  "http://20.212.249.149:5000";
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState("");
@@ -38,77 +39,78 @@ export default function RegisterScreen() {
       Alert.alert("Error", "Please enter your full name");
       return false;
     }
-    
+
     if (!email.trim()) {
       Alert.alert("Error", "Please enter your email");
       return false;
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert("Error", "Please enter a valid email address");
       return false;
     }
-    
+
     if (!username.trim()) {
       Alert.alert("Error", "Please enter a username");
       return false;
     }
-    
+
     if (password.length < 6) {
       Alert.alert("Error", "Password must be at least 6 characters long");
       return false;
     }
-    
+
     return true;
   };
 
-
   const testBackendConnection = async () => {
     setIsTestingConnection(true);
-    
+
     try {
       const testUrl = `${API_BASE_URL}/api/test`;
       console.log("Testing connection to:", testUrl);
-      
+
       const response = await fetch(testUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
+          Accept: "application/json",
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log("Connection test result:", data);
-        
+
         Alert.alert(
-          "Connection Test", 
+          "Connection Test",
           "Successfully connected to the backend server!"
         );
       } else {
         Alert.alert(
-          "Connection Test Failed", 
+          "Connection Test Failed",
           `Server responded with status ${response.status}`
         );
       }
     } catch (error: unknown) {
       console.error("Connection test error:", error);
-      
+
       let errorMessage = "Unknown error";
-      
 
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null && "message" in error) {
-
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error
+      ) {
         errorMessage = (error as { message: string }).message;
       } else if (typeof error === "string") {
         errorMessage = error;
       }
-      
+
       Alert.alert(
-        "Connection Test Failed", 
+        "Connection Test Failed",
         `Error: ${errorMessage}\n\nPlease check that:\n- The backend server is running\n- Your device is on the same network\n- The API URL is correct (${API_BASE_URL})`
       );
     } finally {
@@ -120,33 +122,32 @@ export default function RegisterScreen() {
     if (!validateInputs()) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const apiUrl = `${API_BASE_URL}/api/auth/register`;
       console.log("Sending registration request to:", apiUrl);
-      
+
       const requestBody = {
         fullName,
         email,
         username,
         password,
       };
-      
+
       console.log("Request data:", { ...requestBody, password: "******" });
-      
+
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(requestBody),
       });
-      
+
       console.log("Response status:", response.status);
-      
 
       let data;
       try {
@@ -157,49 +158,50 @@ export default function RegisterScreen() {
         console.error("Error parsing response:", parseError);
         throw new Error("Server response was not valid JSON");
       }
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || "Registration failed");
       }
 
-      Alert.alert(
-        "Success",
-        "Your account has been created successfully!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              router.push("/login");
-            },
+      Alert.alert("Success", "Your account has been created successfully!", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.push("/login");
           },
-        ]
-      );
-      
+        },
+      ]);
     } catch (error: unknown) {
       console.error("Registration error:", error);
-      
 
       if (error instanceof Error) {
-        if (error.message.includes('Network request failed')) {
+        if (error.message.includes("Network request failed")) {
           Alert.alert(
-            "Connection Error", 
+            "Connection Error",
             "Unable to connect to the server. Please check your internet connection and make sure the server is running.\n\nTry using the 'Test Connection' button to diagnose connectivity issues."
           );
         } else {
-       
           let errorMessage = error.message;
-          
-          if (errorMessage.includes('Email already exists')) {
-            Alert.alert("Registration Failed", "This email is already registered. Please try a different one.");
-          } else if (errorMessage.includes('Username already taken')) {
-            Alert.alert("Registration Failed", "This username is already taken. Please choose a different one.");
+
+          if (errorMessage.includes("Email already exists")) {
+            Alert.alert(
+              "Registration Failed",
+              "This email is already registered. Please try a different one."
+            );
+          } else if (errorMessage.includes("Username already taken")) {
+            Alert.alert(
+              "Registration Failed",
+              "This username is already taken. Please choose a different one."
+            );
           } else {
             Alert.alert("Registration Failed", errorMessage);
           }
         }
       } else {
-      
-        Alert.alert("Registration Failed", "An unknown error occurred. Please try again later.");
+        Alert.alert(
+          "Registration Failed",
+          "An unknown error occurred. Please try again later."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -223,10 +225,13 @@ export default function RegisterScreen() {
               style={styles.mushroomBackground}
               resizeMode="contain"
             />
-            
+
             {/* Header */}
             <View style={styles.header}>
-              <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Pressable
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
                 <Ionicons name="arrow-back" size={24} color="black" />
               </Pressable>
               <Link href="/login" asChild>
@@ -240,7 +245,8 @@ export default function RegisterScreen() {
             <View style={styles.content}>
               <Text style={styles.title}>Register</Text>
               <Text style={styles.subtitle}>
-                Create your account - enjoy our services{"\n"}with most updated features.
+                Create your account - enjoy our services{"\n"}with most updated
+                features.
               </Text>
             </View>
 
@@ -320,8 +326,11 @@ export default function RegisterScreen() {
                     </View>
                   </View>
 
-                  <TouchableOpacity 
-                    style={[styles.registerButton, isLoading && styles.disabledButton]} 
+                  <TouchableOpacity
+                    style={[
+                      styles.registerButton,
+                      isLoading && styles.disabledButton,
+                    ]}
                     onPress={handleRegister}
                     disabled={isLoading}
                   >
@@ -331,15 +340,24 @@ export default function RegisterScreen() {
                       <Text style={styles.registerButtonText}>Register</Text>
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.googleButton, isLoading && styles.disabledButton]}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.googleButton,
+                      isLoading && styles.disabledButton,
+                    ]}
                     disabled={isLoading}
                   >
-                    <Ionicons name="logo-google" size={20} color="black" style={styles.googleIcon} />
-                    <Text style={styles.googleButtonText}>Login with Google</Text>
+                    <Ionicons
+                      name="logo-google"
+                      size={20}
+                      color="black"
+                      style={styles.googleIcon}
+                    />
+                    <Text style={styles.googleButtonText}>
+                      Login with Google
+                    </Text>
                   </TouchableOpacity>
-                  
                 </View>
               </View>
             </View>
@@ -417,7 +435,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   formFields: {
-    width:"96%",
+    width: "96%",
     gap: 16,
     alignItems: "center",
   },

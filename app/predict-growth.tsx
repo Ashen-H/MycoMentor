@@ -16,42 +16,43 @@ import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 
-// API base URL - change to your Flask server address
-const API_URL = "http://172.20.10.2:5000";
+// API base URL - replace with your actual API URL
+const API_URL = "http://20.212.249.149:8000";
 
- 
 // Type definitions
-interface PredictionResult {
-  class: string;
-  confidence: number;
-  harvesting_estimate: string;
-  bounding_box: {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    width: number;
-    height: number;
-  };
+interface PredictionResponse {
+  class_counts: Record<string, number>;
+  recommendation: string;
+  confidence_scores: Record<string, number>;
 }
 
-interface ApiResponse {
-  predictions: PredictionResult[];
-  processing_time_ms: number;
-  image_dimensions: {
-    width: number;
-    height: number;
-  };
-}
+// Class mapping for display
+const CLASSES = {
+  "0": "Pink Oyster- 2-3 days to harvest",
+  "1": "Pink Oyster- 4-5 days to harvest",
+  "2": "Pink Oyster- 6-7 days to harvest",
+  "3": "Pink Oyster- Ready to harvest"
+};
+
+// Helper function to convert ArrayBuffer to base64 string
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
 
 export default function PredictGrowthScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [showResults, setShowResults] = useState<boolean>(false);
-  const [mushroomType, setMushroomType] = useState<string>("pink_oyster");
-  const [predictionResults, setPredictionResults] = useState<PredictionResult[]>([]);
-  const [processingTime, setProcessingTime] = useState<number>(0);
+  const [predictionResults, setPredictionResults] = useState<PredictionResponse | null>(null);
+  const [annotatedImage, setAnnotatedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imageExpanded, setImageExpanded] = useState<boolean>(false);
 
   // Request camera and media library permissions
   const requestPermissions = async () => {
@@ -83,6 +84,7 @@ export default function PredictGrowthScreen() {
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setImage(result.assets[0].uri);
         setShowResults(false); // Reset results when new image selected
+        setAnnotatedImage(null); // Clear any previous annotated image
         setError(null); // Clear any previous errors
       }
     } catch (error) {
@@ -105,6 +107,7 @@ export default function PredictGrowthScreen() {
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setImage(result.assets[0].uri);
         setShowResults(false); // Reset results when new image selected
+        setAnnotatedImage(null); // Clear any previous annotated image
         setError(null); // Clear any previous errors
       }
     } catch (error) {
@@ -113,23 +116,25 @@ export default function PredictGrowthScreen() {
     }
   };
 
-  // Convert image to base64
-  const getBase64FromUri = async (uri: string): Promise<string> => {
-    try {
-      // Check if we already have base64 data
-      if (uri.startsWith('data:image')) {
-        return uri.split(',')[1]; // Return the base64 part only
-      }
-      
-      // Read the file and convert to base64
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      return base64;
-    } catch (error) {
-      console.error("Error converting to base64:", error);
-      throw new Error("Failed to convert image");
-    }
+  // Create form data for the image upload
+  const createFormData = async (uri: string) => {
+    const formData = new FormData();
+    
+    // Get file name from URI
+    const fileName = uri.split("/").pop() || "mushroom.jpg";
+    
+    // Determine MIME type
+    const match = /\.(\w+)$/.exec(fileName);
+    const type = match ? `image/${match[1]}` : "image/jpeg";
+    
+    // Append file to form data
+    formData.append("file", {
+      uri,
+      name: fileName,
+      type
+    } as any);
+    
+    return formData;
   };
 
   // Send image to API for analysis
@@ -143,44 +148,41 @@ export default function PredictGrowthScreen() {
     setError(null);
     
     try {
-      // Get base64 data
-      const base64Data = await getBase64FromUri(image);
+      // Create form data
+      const formData = await createFormData(image);
       
-      // Prepare request body
-      const body = JSON.stringify({
-        image: base64Data,
-        mushroom_type: mushroomType
-      });
-      
-      console.log(`Sending request to ${API_URL}/predict with selected mushroom type: ${mushroomType}`);
-      
-      // Send request to API
-      const response = await fetch(`${API_URL}/predict`, {
+      // First get prediction data
+      console.log(`Sending request to ${API_URL}/predict`);
+      const predictionResponse = await fetch(`${API_URL}/predict`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: body,
+        body: formData,
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+      if (!predictionResponse.ok) {
+        throw new Error(`API error: ${predictionResponse.status}`);
       }
       
-      // Parse response
-      const data: ApiResponse = await response.json();
-      console.log("Received data:", data);
+      // Parse prediction data
+      const predictionData: PredictionResponse = await predictionResponse.json();
+      setPredictionResults(predictionData);
       
-      // Check if we have any predictions
-      if (!data.predictions || data.predictions.length === 0) {
-        setError("No mushrooms detected in the image. Please try another photo with a clearer view.");
-      } else {
-        // Store results
-        setPredictionResults(data.predictions);
-        setProcessingTime(data.processing_time_ms);
-        setShowResults(true);
+      // Then get annotated image
+      console.log(`Sending request to ${API_URL}/predict/image`);
+      const imageResponse = await fetch(`${API_URL}/predict/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!imageResponse.ok) {
+        throw new Error(`Image API error: ${imageResponse.status}`);
       }
+      
+      // For React Native, we need to handle the image response differently
+      // Convert the response to a base64 string we can use as image source
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      const base64String = arrayBufferToBase64(arrayBuffer);
+      setAnnotatedImage(`data:image/jpeg;base64,${base64String}`);
+      setShowResults(true);
       
     } catch (error) {
       console.error("Error analyzing image:", error);
@@ -195,26 +197,33 @@ export default function PredictGrowthScreen() {
   const resetPrediction = () => {
     setImage(null);
     setShowResults(false);
-    setPredictionResults([]);
-    setProcessingTime(0);
+    setPredictionResults(null);
+    setAnnotatedImage(null);
     setError(null);
+    setImageExpanded(false);
   };
 
-  // Calculate overall progress based on detected mushroom type
+  // Calculate overall progress based on detected mushroom class
   const calculateProgress = (): number => {
-    if (predictionResults.length === 0) return 25; // Default progress
+    if (!predictionResults) return 0;
     
-    // Simple progress calculation based on confidence
-    const topPrediction = predictionResults[0];
+    // If there are any ready to harvest (class 3), return 100%
+    if (predictionResults.class_counts["3"] > 0) {
+      return 100;
+    }
     
-    // Base progress starts at 50%
-    const baseProgress = 50;
+    // Base progress on recommendation instead of distribution count
+    if (predictionResults.recommendation.includes("2-3 days")) {
+      return 75;
+    } else if (predictionResults.recommendation.includes("4-5 days")) {
+      return 50;
+    } else if (predictionResults.recommendation.includes("6-7 days")) {
+      return 25;
+    } else if (predictionResults.recommendation.includes("Ready")) {
+      return 100;
+    }
     
-    // Add up to 40% based on confidence
-    const confidenceBoost = Math.floor(topPrediction.confidence * 40);
-    
-    // Return total progress capped at 95%
-    return Math.min(95, baseProgress + confidenceBoost);
+    return 25; // Default progress
   };
 
   // Format a confidence value as percentage
@@ -222,9 +231,23 @@ export default function PredictGrowthScreen() {
     return (confidence * 100).toFixed(1) + "%";
   };
 
+  // Get confidence for the recommendation
+  const getRecommendationConfidence = (): number => {
+    if (!predictionResults || !predictionResults.recommendation) return 0;
+    
+    // Find which class corresponds to the recommendation
+    for (const [key, value] of Object.entries(CLASSES)) {
+      if (value === predictionResults.recommendation) {
+        return predictionResults.confidence_scores[key] || 0;
+      }
+    }
+    
+    return 0;
+  };
+
   // Render the result information from API
   const renderResultDetails = () => {
-    if (predictionResults.length === 0) {
+    if (!predictionResults) {
       return (
         <Text style={styles.resultText}>
           No mushrooms detected in the image. Try another photo with a clearer view of the mushrooms.
@@ -232,32 +255,51 @@ export default function PredictGrowthScreen() {
       );
     }
     
-    // Show top prediction
-    const topPrediction = predictionResults[0];
+    const confidence = getRecommendationConfidence();
     
     return (
       <>
         <Text style={styles.resultItem}>
-          <Text style={styles.resultLabel}>Mushroom Type: </Text>
-          <Text style={styles.resultValue}>{topPrediction.class.replace('_', ' ')}</Text>
+          <Text style={styles.resultLabel}>Recommendation: </Text>
+          <Text style={styles.resultValue}>{predictionResults.recommendation}</Text>
         </Text>
         
         <Text style={styles.resultItem}>
           <Text style={styles.resultLabel}>Confidence: </Text>
-          <Text style={styles.resultValue}>{formatConfidence(topPrediction.confidence)}</Text>
-        </Text>
-        
-        <Text style={styles.resultItem}>
-          <Text style={styles.resultLabel}>Estimated Harvest Time: </Text>
-          <Text style={styles.resultValue}>{topPrediction.harvesting_estimate}</Text>
+          <Text style={styles.resultValue}>{formatConfidence(confidence)}</Text>
         </Text>
         
         <Text style={styles.resultNote}>
-          {predictionResults.length > 1 
-            ? `We detected ${predictionResults.length} mushrooms in the image.` 
-            : `We detected 1 mushroom in the image.`}
-          {processingTime > 0 && ` Processing time: ${processingTime}ms`}
+          Based on AI analysis, the model detected pink oyster mushrooms in your image. The highlighted areas in the image show the detected mushrooms.
         </Text>
+        
+        {/* Stage information based on recommendation */}
+        <View style={styles.classCountsContainer}>
+          <Text style={styles.classCountsTitle}>What this means:</Text>
+          {predictionResults.recommendation.includes("Ready") && (
+            <Text style={styles.classCountItem}>
+              Your mushrooms appear to be fully developed and ready to harvest now!
+            </Text>
+          )}
+          
+          {predictionResults.recommendation.includes("2-3 days") && (
+            <Text style={styles.classCountItem}>
+              Your mushrooms are developing well but need 2-3 more days before optimal harvest time.
+            </Text>
+          )}
+          
+          {predictionResults.recommendation.includes("4-5 days") && (
+            <Text style={styles.classCountItem}>
+              Your mushrooms are growing but need 4-5 more days before they'll be ready to harvest.
+            </Text>
+          )}
+          
+          {predictionResults.recommendation.includes("6-7 days") && (
+            <Text style={styles.classCountItem}>
+              Your mushrooms are in early growth stage and need 6-7 more days before harvest.
+            </Text>
+          )}
+        </View>
       </>
     );
   };
@@ -277,15 +319,15 @@ export default function PredictGrowthScreen() {
         {!image && (
           <View style={styles.instructionsContainer}>
             <Ionicons name="leaf-outline" size={60} color="#6da77f" style={styles.instructionIcon} />
-            <Text style={styles.instructionsTitle}>Growth Prediction</Text>
+            <Text style={styles.instructionsTitle}>Harvest Prediction</Text>
             <Text style={styles.instructionsText}>
-              Take a photo of your growing mushrooms to predict their growth timeline and harvest date. This model works best with Pink Oyster mushrooms.
+              Take a photo of your pink oyster mushrooms to predict when they'll be ready for harvest. Our AI will analyze your mushrooms and give you a recommendation.
             </Text>
           </View>
         )}
 
         {/* Image Preview */}
-        {image && (
+        {image && !showResults && (
           <View style={styles.imageContainer}>
             <Image 
               source={{ uri: image }} 
@@ -296,40 +338,36 @@ export default function PredictGrowthScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Mushroom Type Selector */}
-        {image && !showResults && (
-          <View style={styles.selectorContainer}>
-            <Text style={styles.selectorLabel}>Mushroom Type</Text>
-            <View style={styles.typeButtonsContainer}>
-              <TouchableOpacity 
-                style={[styles.typeButton, mushroomType === "pink_oyster" && styles.selectedTypeButton, styles.recommendedButton]} 
-                onPress={() => setMushroomType("pink_oyster")}
-              >
-                <Text style={[styles.typeButtonText, mushroomType === "pink_oyster" && styles.selectedTypeButtonText]}>
-                  Pink Oyster
-                </Text>
-                <Text style={styles.recommendedLabel}>Recommended</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.typeButton, mushroomType === "oyster" && styles.selectedTypeButton]} 
-                onPress={() => setMushroomType("oyster")}
-              >
-                <Text style={[styles.typeButtonText, mushroomType === "oyster" && styles.selectedTypeButtonText]}>
-                  Oyster
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.typeButton, mushroomType === "shiitake" && styles.selectedTypeButton]} 
-                onPress={() => setMushroomType("shiitake")}
-              >
-                <Text style={[styles.typeButtonText, mushroomType === "shiitake" && styles.selectedTypeButtonText]}>
-                  Shiitake
-                </Text>
-              </TouchableOpacity>
-            </View>
+        
+        {/* Annotated Image Result */}
+        {showResults && annotatedImage && !imageExpanded && (
+          <TouchableOpacity 
+            style={styles.imageContainer} 
+            onPress={() => setImageExpanded(true)}
+            activeOpacity={0.9}
+          >
+            <Image 
+              source={{ uri: annotatedImage }} 
+              style={styles.mushroomImage} 
+            />
+            <Text style={styles.annotatedImageLabel}>AI Detection Results (Tap to expand)</Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Expanded Image Modal */}
+        {imageExpanded && annotatedImage && (
+          <View style={styles.expandedImageContainer}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setImageExpanded(false)}
+            >
+              <Ionicons name="close-circle" size={36} color="#fff" />
+            </TouchableOpacity>
+            <Image 
+              source={{ uri: annotatedImage }} 
+              style={styles.expandedImage} 
+              resizeMode="contain"
+            />
           </View>
         )}
 
@@ -344,12 +382,12 @@ export default function PredictGrowthScreen() {
         {/* Image Selection Buttons */}
         {!image && (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
+            <TouchableOpacity style={[styles.imageButton, { backgroundColor: "#6da77f" }]} onPress={takePhoto}>
               <Ionicons name="camera" size={24} color="#fff" />
               <Text style={styles.buttonText}>Take Photo</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+            <TouchableOpacity style={[styles.imageButton, { backgroundColor: "#6da77f" }]} onPress={pickImage}>
               <Ionicons name="images" size={24} color="#fff" />
               <Text style={styles.buttonText}>Pick from Gallery</Text>
             </TouchableOpacity>
@@ -358,8 +396,8 @@ export default function PredictGrowthScreen() {
 
         {/* Analyze Button */}
         {image && !showResults && !isAnalyzing && (
-          <TouchableOpacity style={styles.analyzeButton} onPress={analyzeGrowth}>
-            <Text style={styles.analyzeButtonText}>Predict Growth</Text>
+          <TouchableOpacity style={[styles.analyzeButton, { backgroundColor: "#6da77f" }]} onPress={analyzeGrowth}>
+            <Text style={styles.analyzeButtonText}>Analyze Mushrooms</Text>
           </TouchableOpacity>
         )}
 
@@ -367,15 +405,15 @@ export default function PredictGrowthScreen() {
         {isAnalyzing && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6da77f" />
-            <Text style={styles.loadingText}>Analyzing growth pattern...</Text>
+            <Text style={styles.loadingText}>Analyzing mushroom growth...</Text>
           </View>
         )}
 
         {/* Results Display */}
-        {showResults && (
+        {showResults && predictionResults && (
           <View style={styles.resultsContainer}>
             <View style={styles.resultHeader}>
-              <Text style={styles.resultTitle}>Growth Prediction</Text>
+              <Text style={styles.resultTitle}>Harvest Prediction</Text>
             </View>
             
             <View style={styles.resultContent}>
@@ -385,12 +423,12 @@ export default function PredictGrowthScreen() {
             <View style={styles.progressSection}>
               <Text style={styles.progressTitle}>Growth Progress</Text>
               <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBar, { width: `${calculateProgress()}%` }]} />
+                <View style={[styles.progressBar, { width: `${calculateProgress()}%`, backgroundColor: "#6da77f" }]} />
                 <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
               </View>
             </View>
             
-            <TouchableOpacity style={styles.newSearchButton} onPress={resetPrediction}>
+            <TouchableOpacity style={[styles.newSearchButton, { backgroundColor: "#6da77f" }]} onPress={resetPrediction}>
               <Text style={styles.newSearchText}>New Prediction</Text>
             </TouchableOpacity>
           </View>
@@ -467,6 +505,39 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 4,
   },
+  annotatedImageLabel: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    color: "#fff",
+    textAlign: "center",
+    paddingVertical: 8,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  expandedImageContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    zIndex: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  expandedImage: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 11,
+    backgroundColor: "transparent",
+  },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -474,7 +545,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   imageButton: {
-    backgroundColor: "#6da77f",
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -493,54 +563,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
   },
-  selectorContainer: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  selectorLabel: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#333",
-  },
-  typeButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  typeButton: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    flex: 0.32,
-    alignItems: "center",
-  },
-  selectedTypeButton: {
-    backgroundColor: "#6da77f",
-    borderColor: "#6da77f",
-  },
-  typeButtonText: {
-    color: "#666",
-    fontWeight: "500",
-  },
-  selectedTypeButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  recommendedButton: {
-    borderColor: "#6da77f",
-    borderWidth: 2,
-  },
-  recommendedLabel: {
-    fontSize: 10,
-    color: "#6da77f",
-    marginTop: 4,
-  },
   analyzeButton: {
-    backgroundColor: "#6da77f",
     borderRadius: 8,
     paddingVertical: 16,
     marginHorizontal: 16,
@@ -606,6 +629,25 @@ const styles = StyleSheet.create({
     color: "#777",
     fontStyle: "italic",
   },
+  classCountsContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  classCountsTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: "#555",
+  },
+  classCountItem: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 4,
+  },
   progressSection: {
     backgroundColor: "#f9f9f9",
     borderRadius: 8,
@@ -627,7 +669,6 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#6da77f",
     borderRadius: 6,
   },
   progressText: {
@@ -636,7 +677,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   newSearchButton: {
-    backgroundColor: "#6da77f",
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: "center",
