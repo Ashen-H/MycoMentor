@@ -340,18 +340,6 @@ export default function RegisterScreen() {
                     <Text style={styles.googleButtonText}>Login with Google</Text>
                   </TouchableOpacity>
                   
-                  {/* Connection Test Button */}
-                  <TouchableOpacity 
-                    style={styles.testButton} 
-                    onPress={testBackendConnection}
-                    disabled={isTestingConnection || isLoading}
-                  >
-                    {isTestingConnection ? (
-                      <ActivityIndicator size="small" color="#555" />
-                    ) : (
-                      <Text style={styles.testButtonText}>Test Server Connection</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -429,7 +417,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   formFields: {
-    width: "100%",
+    width:"96%",
     gap: 16,
     alignItems: "center",
   },
