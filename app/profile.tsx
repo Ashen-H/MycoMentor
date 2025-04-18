@@ -504,6 +504,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
+    height:"20%",
+    bottom:-30,
     backgroundColor: "#7FB77E",
   },
   footerImage: {

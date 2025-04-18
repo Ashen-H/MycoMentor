@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 80,
+    bottom: 95,
     backgroundColor: "#6da77f",
     width: 56,
     height: 56,
@@ -556,6 +556,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#6da77f",
     paddingBottom: Platform.OS === "ios" ? 24 : 16,
     paddingTop: 12,
+    bottom:-34,
     justifyContent: "space-around",
     alignItems: "center",
   },
